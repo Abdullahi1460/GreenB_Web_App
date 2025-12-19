@@ -1,0 +1,197 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 140 20% 97%;
+    --foreground: 150 30% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 150 30% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 150 30% 10%;
+
+    /* Brand light green from logo */
+    --primary: 142 70% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 142 30% 94%;
+    --secondary-foreground: 142 30% 15%;
+
+    --muted: 142 20% 92%;
+    --muted-foreground: 142 15% 45%;
+
+    --accent: 142 60% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --success: 142 76% 56%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 142 20% 88%;
+    --input: 142 20% 88%;
+    --ring: 142 70% 60%;
+
+    --radius: 0.75rem;
+
+    --chart-1: 152 69% 31%;
+    --chart-2: 142 76% 36%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 200 70% 50%;
+
+    --sidebar-background: 150 25% 98%;
+    --sidebar-foreground: 150 30% 10%;
+    --sidebar-primary: 152 69% 31%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 145 30% 94%;
+    --sidebar-accent-foreground: 150 30% 15%;
+    --sidebar-border: 145 20% 88%;
+    --sidebar-ring: 152 69% 31%;
+
+    --gradient-primary: linear-gradient(135deg, hsl(152, 69%, 41%) 0%, hsl(142, 76%, 46%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(145, 30%, 94%) 0%, hsl(140, 20%, 97%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0, 0%, 100%) 0%, hsl(145, 20%, 98%) 100%);
+
+    --shadow-sm: 0 1px 2px 0 hsl(150 30% 10% / 0.03);
+    --shadow-md: 0 4px 6px -1px hsl(150 30% 10% / 0.05), 0 2px 4px -2px hsl(150 30% 10% / 0.05);
+    --shadow-lg: 0 10px 15px -3px hsl(150 30% 10% / 0.08), 0 4px 6px -4px hsl(150 30% 10% / 0.05);
+    --shadow-glow: 0 0 20px hsl(var(--primary) / 0.5);
+  }
+
+  .dark {
+    --background: 150 30% 6%;
+    --foreground: 145 20% 95%;
+
+    --card: 150 25% 10%;
+    --card-foreground: 145 20% 95%;
+
+    --popover: 150 25% 10%;
+    --popover-foreground: 145 20% 95%;
+
+    --primary: 152 69% 52%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 20% 15%;
+    --secondary-foreground: 145 20% 90%;
+
+    --muted: 150 20% 18%;
+    --muted-foreground: 145 15% 60%;
+
+    --accent: 152 60% 50%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --success: 142 76% 46%;
+    --success-foreground: 0 0% 100%;
+
+    --border: 150 20% 18%;
+    --input: 150 20% 18%;
+    --ring: 152 69% 52%;
+
+    --sidebar-background: 150 25% 8%;
+    --sidebar-foreground: 145 20% 95%;
+    --sidebar-primary: 152 69% 52%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 20% 15%;
+    --sidebar-accent-foreground: 145 20% 90%;
+    --sidebar-border: 150 20% 18%;
+    --sidebar-ring: 152 69% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Space Grotesk', sans-serif;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-sm border border-border/50 shadow-lg;
+  }
+
+  .status-full {
+    @apply bg-destructive text-destructive-foreground;
+  }
+
+  .status-warning {
+    @apply bg-warning text-warning-foreground;
+  }
+
+  .status-ok {
+    @apply bg-success text-success-foreground;
+  }
+
+  .gauge-gradient {
+    background: conic-gradient(
+      hsl(var(--success)) 0%,
+      hsl(var(--warning)) 50%,
+      hsl(var(--destructive)) 100%
+    );
+  }
+}
+
+@layer components {
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)) 0%,
+      hsl(var(--background)) 50%,
+      hsl(var(--muted)) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
