@@ -44,6 +44,13 @@ const MapView = () => {
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const MAPTILER_KEY = (import.meta as any).env?.VITE_MAPTILER_KEY || 'tBvtabTNxhFc7RfCBn1T';
 
+  // Helper for device list item color
+  const getMarkerColor = (device: Device) => {
+    if (device.isFull) return 'bg-destructive';
+    if (device.binPercentage >= 75) return 'bg-warning';
+    return 'bg-success';
+  };
+
   // Initialize map once
   useEffect(() => {
     if (mapRef.current || !mapContainerRef.current) return;
@@ -59,6 +66,11 @@ const MapView = () => {
     });
 
     mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
   }, [MAPTILER_KEY, devices.length]);
 
   // Update markers when devices change

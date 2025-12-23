@@ -91,6 +91,21 @@ export function subscribeAlerts(onAlerts: (alerts: Alert[]) => void) {
   });
 }
 
+export function subscribeEvents(onEvents: (events: any[]) => void) {
+  const eventsRef = ref(db, 'events');
+  return onValue(eventsRef, (snapshot) => {
+    const items = snapshotToArray<any>(snapshot);
+    onEvents(items.map((e: any) => ({
+      id: String(e.id),
+      deviceId: String(e.deviceId),
+      eventType: String(e.eventType),
+      previousValue: e.previousValue,
+      newValue: e.newValue,
+      timestamp: String(e.timestamp ?? new Date().toISOString()),
+    })));
+  });
+}
+
 export async function fetchDeviceById(id: string): Promise<Device | null> {
   // Try direct child lookup first
   const snap = await get(ref(db, `devices/${id}`));

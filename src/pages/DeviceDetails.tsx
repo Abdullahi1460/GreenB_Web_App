@@ -12,9 +12,11 @@ import { BatteryIcon } from '@/components/dashboard/BatteryIcon';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import type { Device } from '@/types/device';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDeviceById, subscribeDevice } from '@/services/realtime';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
 
 const DeviceDetails = () => {
   const { deviceId } = useParams();
@@ -25,6 +27,12 @@ const DeviceDetails = () => {
   });
   const [device, setDevice] = useState<Device | null>(initialDevice ?? null);
  
+  // MapLibre refs
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<maplibregl.Map | null>(null);
+  const markerRef = useRef<maplibregl.Marker | null>(null);
+  const MAPTILER_KEY = (import.meta as any).env?.VITE_MAPTILER_KEY || 'tBvtabTNxhFc7RfCBn1T';
+
   useEffect(() => {
     setDevice(initialDevice ?? null);
   }, [initialDevice]);
@@ -35,7 +43,49 @@ const DeviceDetails = () => {
     return () => unsubscribe();
   }, [deviceId, initialDevice]);
  
+  // Initialize map
+  useEffect(() => {
+    if (!device || mapRef.current || !mapContainerRef.current) return;
+
+    const map = new maplibregl.Map({
+      container: mapContainerRef.current,
+      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
+      center: [device.longitude, device.latitude],
+      zoom: 14,
+    });
+
+    mapRef.current = map;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [device, MAPTILER_KEY]);
+
+  // Update marker
+  useEffect(() => {
+    if (!device || !mapRef.current) return;
+
+    if (markerRef.current) {
+      markerRef.current.remove();
+    }
+
+    const color = device.isFull ? '#EF4444' : device.binPercentage >= 75 ? '#F59E0B' : '#22C55E';
+    
+    markerRef.current = new maplibregl.Marker({ color })
+      .setLngLat([device.longitude, device.latitude])
+      .addTo(mapRef.current);
+
+    mapRef.current.flyTo({
+      center: [device.longitude, device.latitude],
+      zoom: 14,
+      essential: true
+    });
+
+  }, [device]);
+
   const deviceEvents = device && (device as any).events ? (device as any).events : [];
+
 
   if (!device) {
     return (
@@ -199,26 +249,8 @@ const DeviceDetails = () => {
             </CardHeader>
             <CardContent>
               <div className="relative aspect-video rounded-lg bg-muted overflow-hidden">
-                {/* Placeholder map visualization */}
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/10">
-                  <div className="absolute inset-0 opacity-20" style={{
-                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23166534' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                  }} />
-                </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="relative">
-                    <div className={cn(
-                      'h-8 w-8 rounded-full shadow-lg flex items-center justify-center',
-                      getMarkerColor()
-                    )}>
-                      <MapPin className="h-5 w-5 text-white" />
-                    </div>
-                    <div className={cn(
-                      'absolute -inset-2 rounded-full animate-ping opacity-50',
-                      getMarkerColor()
-                    )} />
-                  </div>
-                </div>
+                <div ref={mapContainerRef} className="absolute inset-0" />
+                
                 <div className="absolute bottom-3 left-3 rounded-md bg-card/90 backdrop-blur px-3 py-2">
                   <p className="text-xs font-medium">{device.latitude.toFixed(6)}, {device.longitude.toFixed(6)}</p>
                 </div>
@@ -229,7 +261,7 @@ const DeviceDetails = () => {
                 </div>
               </div>
               <p className="mt-2 text-xs text-muted-foreground text-center">
-                Connect to Mapbox for full map functionality
+                Powered by MapTiler / MapLibre
               </p>
             </CardContent>
           </Card>

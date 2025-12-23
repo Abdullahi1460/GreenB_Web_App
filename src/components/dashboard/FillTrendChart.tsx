@@ -1,9 +1,127 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { TrendingUp } from 'lucide-react';
-import { mockChartData } from '@/data/mockData';
+import { useEffect, useState } from 'react';
+import { subscribeDevices, subscribeEvents } from '@/services/realtime';
+import { format, parseISO, startOfHour, addHours } from 'date-fns';
+import { Device } from '@/types/device';
 
 export const FillTrendChart = () => {
+  const [data, setData] = useState<any[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
+
+  useEffect(() => {
+    // Subscribe to devices to know which lines to draw
+    const unsubscribeDevices = subscribeDevices((liveDevices) => {
+      setDevices(liveDevices);
+    });
+    return () => unsubscribeDevices();
+  }, []);
+
+  useEffect(() => {
+    // Subscribe to events to build the chart history
+    const unsubscribeEvents = subscribeEvents((events) => {
+      if (!events || events.length === 0) {
+        // Fallback: if no events, use current devices state to show at least something
+        const now = format(new Date(), 'HH:mm');
+        const currentPoint: any = { time: now };
+        let totalFill = 0;
+        let count = 0;
+        
+        devices.forEach(d => {
+          currentPoint[d.id] = d.binPercentage;
+          totalFill += d.binPercentage;
+          count++;
+        });
+        
+        if (count > 0) {
+          currentPoint.average = Math.round(totalFill / count);
+        }
+        
+        // Show a flat line history if we have no events
+        setData([
+            { ...currentPoint, time: format(addHours(new Date(), -4), 'HH:mm') },
+            { ...currentPoint, time: format(addHours(new Date(), -2), 'HH:mm') },
+            currentPoint
+        ]);
+        return;
+      }
+
+      // Process events into time buckets
+      const sortedEvents = [...events].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      
+      // We want to show the last 24 hours or so
+      const buckets: Record<string, any> = {};
+      const deviceLastValues: Record<string, number> = {};
+
+      // Initialize with 0 or baseline
+      devices.forEach(d => {
+          deviceLastValues[d.id] = 0;
+      });
+
+      // Iterate through events and update state
+      sortedEvents.forEach(e => {
+          if (e.eventType === 'fill_change' || e.eventType === 'fill_level') {
+              const val = e.newValue ?? e.binPercentage; // Handle different event shapes
+              if (typeof val === 'number') {
+                  deviceLastValues[e.deviceId] = val;
+                  
+                  const timeKey = format(parseISO(e.timestamp), 'HH:mm');
+                  // Create or update bucket
+                  if (!buckets[timeKey]) {
+                      buckets[timeKey] = { time: timeKey, ...deviceLastValues };
+                  } else {
+                      buckets[timeKey] = { ...buckets[timeKey], ...deviceLastValues };
+                  }
+              }
+          }
+      });
+
+      // Calculate averages
+      const chartData = Object.values(buckets).map((point: any) => {
+          let sum = 0;
+          let count = 0;
+          devices.forEach(d => {
+              if (typeof point[d.id] === 'number') {
+                  sum += point[d.id];
+                  count++;
+              }
+          });
+          return {
+              ...point,
+              average: count > 0 ? Math.round(sum / count) : 0
+          };
+      });
+
+      // If we still have very little data (e.g. < 2 points), append current state
+      if (chartData.length < 2 && devices.length > 0) {
+           const now = format(new Date(), 'HH:mm');
+           const currentPoint: any = { time: now };
+           let sum = 0;
+           devices.forEach(d => {
+               currentPoint[d.id] = d.binPercentage;
+               sum += d.binPercentage;
+           });
+           currentPoint.average = devices.length > 0 ? Math.round(sum / devices.length) : 0;
+           chartData.push(currentPoint);
+      }
+
+      setData(chartData);
+    });
+
+    return () => unsubscribeEvents();
+  }, [devices]); // Re-run when devices list loads (for fallback logic)
+
+  // Generate colors for lines
+  const colors = [
+    "hsl(var(--chart-1))",
+    "hsl(var(--chart-2))",
+    "hsl(var(--chart-4))",
+    "hsl(var(--chart-5))",
+    "#8884d8",
+    "#82ca9d"
+  ];
+
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
@@ -14,7 +132,7 @@ export const FillTrendChart = () => {
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={280}>
-          <LineChart data={mockChartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+          <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
             <XAxis 
               dataKey="time" 
@@ -40,33 +158,22 @@ export const FillTrendChart = () => {
               wrapperStyle={{ fontSize: '12px' }}
               iconType="circle"
             />
-            <Line
-              type="monotone"
-              dataKey="device001"
-              name="Device 001"
-              stroke="hsl(var(--chart-1))"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="device002"
-              name="Device 002"
-              stroke="hsl(var(--chart-4))"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="device003"
-              name="Device 003"
-              stroke="hsl(var(--chart-2))"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-            />
+            
+            {/* Dynamic Lines for each device */}
+            {devices.slice(0, 5).map((device, index) => (
+              <Line
+                key={device.id}
+                type="monotone"
+                dataKey={device.id}
+                name={device.id}
+                stroke={colors[index % colors.length]}
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4 }}
+                connectNulls
+              />
+            ))}
+
             <Line
               type="monotone"
               dataKey="average"
@@ -75,6 +182,7 @@ export const FillTrendChart = () => {
               strokeWidth={3}
               strokeDasharray="5 5"
               dot={false}
+              connectNulls
             />
           </LineChart>
         </ResponsiveContainer>

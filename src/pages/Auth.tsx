@@ -119,66 +119,24 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-primary-foreground/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-success/30 rounded-full blur-3xl" />
-        </div>
-        
-        <div className="relative z-10 flex flex-col justify-center items-center w-full p-12">
-            <Logo size="xl" className="shadow-2xl mb-8" rounded alt="GreenB" />
-            <h1 className="text-4xl font-bold text-primary-foreground text-center mb-4">
-            Smart Waste Management
-          </h1>
-          <p className="text-primary-foreground/80 text-center text-lg max-w-md">
-            Monitor your IoT-enabled smart bins in real-time. Track fill levels, 
-            get alerts, and optimize collection routes.
-          </p>
-          
-          <div className="mt-12 grid grid-cols-3 gap-8 text-center">
-            {[
-              { value: "10K+", label: "Smart Bins" },
-              { value: "99.9%", label: "Uptime" },
-              { value: "50+", label: "Cities" }
-            ].map((stat, index) => (
-              <div key={index}>
-                <div className="text-3xl font-bold text-primary-foreground">{stat.value}</div>
-                <div className="text-primary-foreground/70 text-sm">{stat.label}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <Card className="w-full max-w-md border-border/50 shadow-lg">
+          <CardHeader className="text-center pb-4">
+            <div className="flex justify-center mb-2">
+              <Logo size="sm" rounded alt="GreenB" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-foreground">
+              {isSignUp ? "Create an Account" : "Welcome Back"}
+            </CardTitle>
+            <CardDescription className="text-muted-foreground">
+              {isSignUp 
+                ? "Sign up to start managing your smart bins" 
+                : "Sign in to access your dashboard"}
+            </CardDescription>
+          </CardHeader>
 
-      {/* Right Side - Auth Form */}
-      <div className="w-full lg:w-1/2 flex flex-col">
-        <div className="p-6">
-          <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-            <ArrowLeft className="w-4 h-4" />
-            Back to Home
-          </Link>
-        </div>
-
-        <div className="flex-1 flex items-center justify-center p-6">
-          <Card className="w-full max-w-md border-border/50 shadow-lg">
-            <CardHeader className="text-center pb-4">
-              <div className="md:hidden flex justify-center mb-2">
-                <Logo size="sm" rounded alt="GreenB" />
-              </div>
-              <CardTitle className="text-2xl font-bold text-foreground">
-                {isSignUp ? "Create an Account" : "Welcome Back"}
-              </CardTitle>
-              <CardDescription className="text-muted-foreground">
-                {isSignUp 
-                  ? "Sign up to start managing your smart bins" 
-                  : "Sign in to access your dashboard"}
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
                 {isSignUp && (
                   <div className="space-y-2">
                     <Label htmlFor="name" className="text-foreground">Full Name</Label>
@@ -319,8 +277,6 @@ const Auth = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </div>
     </div>
   );
 };

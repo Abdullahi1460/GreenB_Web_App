@@ -12,6 +12,7 @@ import DeviceDetails from "./pages/DeviceDetails";
 import Alerts from "./pages/Alerts";
 import MapView from "./pages/MapView";
 import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/alerts" element={<Alerts />} />
               <Route path="/map" element={<MapView />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/profile" element={<Profile />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />
