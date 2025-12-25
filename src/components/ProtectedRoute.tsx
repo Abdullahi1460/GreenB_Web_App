@@ -17,8 +17,11 @@ const ProtectedRoute = () => {
   }, []);
 
   if (!ready) {
-    // Lightweight placeholder; you can replace with a full-screen loader if desired
-    return null;
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <div className="h-6 w-6 animate-spin border-2 border-muted-foreground border-t-primary rounded-full" />
+      </div>
+    );
   }
 
   return user ? (

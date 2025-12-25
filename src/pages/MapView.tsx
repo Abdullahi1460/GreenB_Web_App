@@ -54,55 +54,60 @@ const MapView = () => {
   // Initialize map once
   useEffect(() => {
     if (mapRef.current || !mapContainerRef.current) return;
-    const defaultCenter: [number, number] = devices.length > 0
-      ? [devices[0].longitude, devices[0].latitude]
-      : [0, 0];
-
-    const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
-      center: defaultCenter,
-      zoom: devices.length > 0 ? 10 : 2,
-    });
-
-    mapRef.current = map;
+    try {
+      const map = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
+        center: [0, 0],
+        zoom: 2,
+      });
+      mapRef.current = map;
+    } catch (e) {
+      console.error('Map initialization failed', e);
+    }
 
     return () => {
-      map.remove();
-      mapRef.current = null;
+      try {
+        mapRef.current?.remove();
+      } finally {
+        mapRef.current = null;
+      }
     };
-  }, [MAPTILER_KEY, devices.length]);
+  }, [MAPTILER_KEY]);
 
   // Update markers when devices change
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+    try {
+      // Remove old markers
+      markersRef.current.forEach((m) => m.remove());
+      markersRef.current = [];
 
-    // Remove old markers
-    markersRef.current.forEach((m) => m.remove());
-    markersRef.current = [];
-
-    devices.forEach((device) => {
-      if (typeof device.longitude !== 'number' || typeof device.latitude !== 'number') return;
-      const color = device.isFull ? '#EF4444' : device.binPercentage >= 75 ? '#F59E0B' : '#22C55E';
-      const marker = new maplibregl.Marker({ color })
-        .setLngLat([device.longitude, device.latitude])
-        .addTo(map);
-      marker.getElement().addEventListener('click', () => setSelectedDevice(device));
-      markersRef.current.push(marker);
-    });
-
-    // Fit to bounds if we have devices
-    if (devices.length > 0) {
-      const bounds = new maplibregl.LngLatBounds();
-      devices.forEach((d) => {
-        if (typeof d.longitude === 'number' && typeof d.latitude === 'number') {
-          bounds.extend([d.longitude, d.latitude]);
-        }
+      devices.forEach((device) => {
+        if (typeof device.longitude !== 'number' || typeof device.latitude !== 'number') return;
+        const color = device.isFull ? '#EF4444' : device.binPercentage >= 75 ? '#F59E0B' : '#22C55E';
+        const marker = new maplibregl.Marker({ color })
+          .setLngLat([device.longitude, device.latitude])
+          .addTo(map);
+        marker.getElement().addEventListener('click', () => setSelectedDevice(device));
+        markersRef.current.push(marker);
       });
-      if (!bounds.isEmpty()) {
-        map.fitBounds(bounds, { padding: 40, maxZoom: 14 });
+
+      // Fit to bounds if we have devices
+      if (devices.length > 0) {
+        const bounds = new maplibregl.LngLatBounds();
+        devices.forEach((d) => {
+          if (typeof d.longitude === 'number' && typeof d.latitude === 'number') {
+            bounds.extend([d.longitude, d.latitude]);
+          }
+        });
+        if (!bounds.isEmpty()) {
+          map.fitBounds(bounds, { padding: 40, maxZoom: 14 });
+        }
       }
+    } catch (e) {
+      console.error('Updating markers failed', e);
     }
   }, [devices]);
 

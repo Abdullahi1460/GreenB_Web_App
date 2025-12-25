@@ -45,43 +45,42 @@ const DeviceDetails = () => {
  
   // Initialize map
   useEffect(() => {
-    if (!device || mapRef.current || !mapContainerRef.current) return;
-
-    const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
-      center: [device.longitude, device.latitude],
-      zoom: 14,
-    });
-
-    mapRef.current = map;
-
+    if (mapRef.current || !mapContainerRef.current) return;
+    try {
+      const map = new maplibregl.Map({
+        container: mapContainerRef.current,
+        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
+        center: [0, 0],
+        zoom: 2,
+      });
+      mapRef.current = map;
+    } catch (e) {
+      console.error('DeviceDetails map init failed', e);
+    }
     return () => {
-      map.remove();
-      mapRef.current = null;
+      try {
+        mapRef.current?.remove();
+      } finally {
+        mapRef.current = null;
+      }
     };
-  }, [device, MAPTILER_KEY]);
+  }, [MAPTILER_KEY]);
 
   // Update marker
   useEffect(() => {
     if (!device || !mapRef.current) return;
-
-    if (markerRef.current) {
-      markerRef.current.remove();
+    try {
+      if (markerRef.current) {
+        markerRef.current.remove();
+      }
+      const color = device.isFull ? '#EF4444' : device.binPercentage >= 75 ? '#F59E0B' : '#22C55E';
+      markerRef.current = new maplibregl.Marker({ color })
+        .setLngLat([device.longitude, device.latitude])
+        .addTo(mapRef.current);
+      mapRef.current.flyTo({ center: [device.longitude, device.latitude], zoom: 14, essential: true });
+    } catch (e) {
+      console.error('DeviceDetails marker update failed', e);
     }
-
-    const color = device.isFull ? '#EF4444' : device.binPercentage >= 75 ? '#F59E0B' : '#22C55E';
-    
-    markerRef.current = new maplibregl.Marker({ color })
-      .setLngLat([device.longitude, device.latitude])
-      .addTo(mapRef.current);
-
-    mapRef.current.flyTo({
-      center: [device.longitude, device.latitude],
-      zoom: 14,
-      essential: true
-    });
-
   }, [device]);
 
   const deviceEvents = device && (device as any).events ? (device as any).events : [];
