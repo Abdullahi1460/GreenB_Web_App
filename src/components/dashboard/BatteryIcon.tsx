@@ -3,11 +3,12 @@ import { cn } from '@/lib/utils';
 
 interface BatteryIconProps {
   percentage: number;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg';
 }
 
 export const BatteryIcon = ({ percentage, size = 'md' }: BatteryIconProps) => {
   const sizes = {
+    xs: { w: 60, h: 30, pad: 4 },
     sm: { w: 80, h: 40, pad: 6 },
     md: { w: 140, h: 60, pad: 8 },
     lg: { w: 200, h: 80, pad: 10 },

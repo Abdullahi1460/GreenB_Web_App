@@ -43,7 +43,7 @@ const Devices = () => {
 
   const { data: liveDevices, isLoading, isError, error } = useQuery({
     queryKey: ['devices'],
-    queryFn: fetchDevices,
+    queryFn: () => fetchDevices(),
     staleTime: 30_000,
   });
 
@@ -281,44 +281,66 @@ const Devices = () => {
               </Select>
             </div>
 
-            <div className="block md:hidden space-y-2">
-              {devices.map((device) => (
-                <Link key={device.id} to={`/devices/${device.id}`} className="block">
-                  <div className="rounded-lg border border-border bg-card p-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <TrashBinIcon percentage={device.binPercentage} size="sm" isFull={device.isFull} />
-                        <span className="text-sm font-semibold text-foreground">{device.id}</span>
+            <div className="grid md:hidden grid-cols-2 gap-3">
+              {devices.map((device) => {
+                const isHigh = device.binPercentage >= 75 && !device.isFull;
+                const isNormal = device.binPercentage < 75;
+                const statusColor = device.isFull 
+                  ? { border: 'border-destructive/30', gradient: 'from-destructive/10 via-card to-destructive/5', shadow: 'hover:shadow-destructive/20', icon: 'text-destructive', shimmer: 'from-destructive/0 via-destructive/10 to-destructive/0' }
+                  : isHigh
+                  ? { border: 'border-orange-500/30', gradient: 'from-orange-500/10 via-card to-orange-600/5', shadow: 'hover:shadow-orange-500/20', icon: 'text-orange-500', shimmer: 'from-orange-500/0 via-orange-500/10 to-orange-500/0' }
+                  : { border: 'border-success/30', gradient: 'from-success/10 via-card to-success/5', shadow: 'hover:shadow-success/20', icon: 'text-success', shimmer: 'from-success/0 via-success/10 to-success/0' };
+
+                return (
+                  <Link key={device.id} to={`/devices/${device.id}`} className="block group">
+                    <div className={cn(
+                      "relative overflow-hidden rounded-xl border backdrop-blur-sm p-3 transition-all duration-500 hover:scale-105 hover:-translate-y-1 hover:shadow-xl",
+                      statusColor.border,
+                      statusColor.gradient,
+                      statusColor.shadow
+                    )}>
+                      <div className={cn("absolute inset-0 bg-gradient-to-r translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000", statusColor.shimmer)} />
+                      
+                      <div className="relative z-10 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <TrashBinIcon percentage={device.binPercentage} size="sm" isFull={device.isFull} />
+                          <span className={cn(
+                            'text-sm font-bold',
+                            device.isFull ? 'text-destructive' : isHigh ? 'text-orange-500' : 'text-success'
+                          )}>
+                            {device.binPercentage}%
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <h3 className="text-xs font-bold text-foreground truncate">{device.name || device.id}</h3>
+                          <p className="text-[10px] text-muted-foreground truncate">{device.id}</p>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <StatusBadge isFull={device.isFull} size="sm" />
+                          <TamperBadge tamperDetected={device.tamperDetected} />
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                          <div className="flex items-center gap-1">
+                            <BatteryIcon percentage={device.batteryLevel} size="xs" />
+                            <span className="text-[10px] text-muted-foreground font-medium">{device.batteryLevel}%</span>
+                          </div>
+                          <DeviceStatusBadge status={device.status} />
+                        </div>
+                        
+                        <div className="text-[9px] text-muted-foreground/60 text-right italic">
+                          {format(new Date(device.timestamp), 'MMM d, HH:mm')}
+                        </div>
                       </div>
-                      <span className={cn(
-                        'text-sm font-semibold',
-                        device.isFull ? 'text-destructive' : device.binPercentage >= 75 ? 'text-warning' : 'text-success'
-                      )}>
-                        {device.binPercentage}%
-                      </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <StatusBadge isFull={device.isFull} size="sm" />
-                        <TamperBadge tamperDetected={device.tamperDetected} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <BatteryIcon percentage={device.batteryLevel} size="sm" />
-                        <span className="text-xs text-muted-foreground">{device.batteryLevel}%</span>
-                      </div>
-                    </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(device.timestamp), 'MMM d, HH:mm')}
-                      </span>
-                      <DeviceStatusBadge status={device.status} />
-                    </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                );
+              })}
               {devices.length === 0 && (
-                <div className="rounded-lg border border-border p-3 text-center text-sm text-muted-foreground">
-                  No devices found in Firebase.
+                <div className="col-span-2 rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground backdrop-blur-sm">
+                  No devices found.
                 </div>
               )}
             </div>
