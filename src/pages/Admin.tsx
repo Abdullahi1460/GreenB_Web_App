@@ -198,7 +198,7 @@ export default function Admin() {
                         </CardHeader>
                         <CardContent className="h-[300px] w-full pl-0">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData}>
+                                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -206,14 +206,35 @@ export default function Admin() {
                                         </linearGradient>
                                     </defs>
                                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted/20" vertical={false} />
-                                    <XAxis dataKey="date" axisLine={false} tickLine={false} className="text-xs text-muted-foreground" tickMargin={10} />
-                                    <YAxis axisLine={false} tickLine={false} className="text-xs text-muted-foreground" tickFormatter={(value) => `₦${value}`} />
+                                    <XAxis
+                                        dataKey="date"
+                                        axisLine={false}
+                                        tickLine={false}
+                                        className="text-xs text-muted-foreground"
+                                        tickMargin={10}
+                                    />
+                                    <YAxis
+                                        axisLine={false}
+                                        tickLine={false}
+                                        className="text-xs text-muted-foreground"
+                                        tickFormatter={(value) => `₦${value}`}
+                                    />
                                     <Tooltip
-                                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
+                                        contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                         itemStyle={{ color: 'hsl(var(--foreground))' }}
                                         formatter={(value: number) => [`₦${value.toLocaleString()}`, 'Revenue']}
+                                        cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4' }}
                                     />
-                                    <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" strokeWidth={2} fillOpacity={1} fill="url(#colorRev)" animationDuration={2000} />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="amount"
+                                        stroke="hsl(var(--primary))"
+                                        strokeWidth={3}
+                                        fillOpacity={1}
+                                        fill="url(#colorRev)"
+                                        animationDuration={1500}
+                                        activeDot={{ r: 6, strokeWidth: 0 }}
+                                    />
                                 </AreaChart>
                             </ResponsiveContainer>
                         </CardContent>

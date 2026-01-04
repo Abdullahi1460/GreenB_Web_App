@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/components/ui/use-toast";
 import { StatusBadge } from '@/components/dashboard/StatusBadge';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDevices, fetchAlerts, subscribeAlerts } from '@/services/realtime';
 import { push, ref, get } from 'firebase/database';
@@ -20,8 +20,10 @@ import type { Alert } from '@/types/device';
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [requesting, setRequesting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [uid, setUid] = useState<string>('');
 
   useEffect(() => {
@@ -31,14 +33,19 @@ const Index = () => {
         const snapshot = await get(ref(db, `users/${user.uid}/role`));
         if (snapshot.exists() && snapshot.val() === 'admin') {
           setIsAdmin(true);
+          navigate('/admin');
+          // Keep loading true while redirecting
+        } else {
+          setLoading(false);
         }
       } else {
         setUid('');
         setIsAdmin(false);
+        setLoading(false);
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleEmergencyRequest = async () => {
     const user = auth.currentUser;
@@ -91,6 +98,10 @@ const Index = () => {
     const unsubscribe = subscribeAlerts((live) => setAlerts(live));
     return () => { if (typeof unsubscribe === 'function') unsubscribe(); };
   }, []);
+
+  if (loading) {
+    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  }
 
   return (
     <Layout>
