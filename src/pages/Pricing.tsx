@@ -161,40 +161,48 @@ const PlanCard = ({ plan, billingCycle }: { plan: any, billingCycle: 'monthly' |
 
     const isPopular = plan.id === 'professional';
 
+    // Define color themes based on plan
+    const colorTheme = plan.id === 'starter' 
+        ? { border: 'border-blue-500/30', gradient: 'from-blue-500/10 via-card to-blue-600/5', shadow: 'hover:shadow-blue-500/20', hoverBorder: 'hover:border-blue-400/50', shimmer: 'from-blue-500/0 via-blue-500/10 to-blue-500/0' }
+        : plan.id === 'professional'
+        ? { border: 'border-green-500/30', gradient: 'from-green-500/10 via-card to-green-600/5', shadow: 'hover:shadow-green-500/20', hoverBorder: 'hover:border-green-400/50', shimmer: 'from-green-500/0 via-green-500/10 to-green-500/0' }
+        : { border: 'border-orange-500/30', gradient: 'from-orange-500/10 via-card to-orange-600/5', shadow: 'hover:shadow-orange-500/20', hoverBorder: 'hover:border-orange-400/50', shimmer: 'from-orange-500/0 via-orange-500/10 to-orange-500/0' };
+
     return (
-        <Card className={`flex flex-col relative overflow-hidden transition-all duration-300 ${isPopular ? 'border-primary shadow-2xl md:scale-105 z-10 bg-gradient-to-b from-card to-primary/5' : 'hover:shadow-xl hover:border-primary/50 border-primary/10 bg-card/50'}`}>
+        <Card className={`flex flex-col relative overflow-hidden transition-all duration-500 hover:scale-105 hover:-translate-y-2 group backdrop-blur-sm ${colorTheme.border} bg-gradient-to-br ${colorTheme.gradient} hover:shadow-2xl ${colorTheme.shadow} ${colorTheme.hoverBorder} ${isPopular ? 'md:scale-105 z-10' : ''}`}>
+            <div className={`absolute inset-0 bg-gradient-to-r ${colorTheme.shimmer} translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000`} />
             {isPopular && (
-                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">
+                <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-2 sm:px-3 py-1 rounded-bl-xl uppercase tracking-wider">
                     Popular
                 </div>
             )}
-            <CardHeader className="pb-8">
-                <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                <CardDescription className="text-base mt-2">{plan.description}</CardDescription>
+            <CardHeader className="pb-4 sm:pb-8">
+                <CardTitle className="text-lg sm:text-2xl font-bold">{plan.name}</CardTitle>
+                <CardDescription className="text-xs sm:text-base mt-1 sm:mt-2">{plan.description}</CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
-                <div className="mb-8 flex items-baseline">
-                    <span className="text-4xl font-extrabold tracking-tight">{priceDisplay}</span>
-                    <span className="text-muted-foreground font-medium ml-1">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+                <div className="mb-4 sm:mb-8 flex items-baseline">
+                    <span className="text-2xl sm:text-4xl font-extrabold tracking-tight">{priceDisplay}</span>
+                    <span className="text-muted-foreground font-medium text-xs sm:text-base ml-1">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
                 </div>
-                <ul className="space-y-4">
+                <ul className="space-y-2 sm:space-y-4">
                     {plan.features.map((feature: string, i: number) => (
                         <li key={i} className="flex items-start">
-                            <div className={`mt-0.5 mr-3 flex h-5 w-5 items-center justify-center rounded-full ${isPopular ? 'bg-primary/20 text-primary' : 'bg-green-500/10 text-green-600'}`}>
-                                <Check className="h-3 w-3" />
+                            <div className={`mt-0.5 mr-2 sm:mr-3 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full ${isPopular ? 'bg-primary/20 text-primary' : 'bg-green-500/10 text-green-600'}`}>
+                                <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                             </div>
-                            <span className="text-sm text-foreground/80">{feature}</span>
+                            <span className="text-xs sm:text-sm text-foreground/80">{feature}</span>
                         </li>
                     ))}
                 </ul>
             </CardContent>
-            <CardFooter className="pt-8">
+            <CardFooter className="pt-4 sm:pt-8">
                 <Button
                     onClick={handleBuy}
-                    className={`w-full h-11 text-base font-semibold shadow-md transition-all ${isPopular ? 'bg-gradient-to-r from-primary to-green-600 hover:from-primary/90 hover:to-green-700 hover:shadow-lg' : ''}`}
+                    className={`w-full h-9 sm:h-11 text-sm sm:text-base font-semibold shadow-md transition-all ${isPopular ? 'bg-gradient-to-r from-primary to-green-600 hover:from-primary/90 hover:to-green-700 hover:shadow-lg' : ''}`}
                     variant={isPopular ? 'default' : 'outline'}
                 >
-                    {isPopular ? `Get Started with ${plan.name}` : `Choose ${plan.name}`}
+                    {isPopular ? `Get Started` : `Choose ${plan.name}`}
                 </Button>
             </CardFooter>
         </Card>
@@ -229,7 +237,7 @@ export default function PricingPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <div className="grid grid-cols-2 gap-3 md:gap-6 lg:grid-cols-3 max-w-6xl mx-auto">
                     {plans.map((plan) => (
                         <PlanCard key={plan.id} plan={plan} billingCycle={billingCycle} />
                     ))}

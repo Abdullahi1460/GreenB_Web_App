@@ -113,37 +113,45 @@ const Index = () => {
             <p className="text-muted-foreground">Real-time overview of your GreenB smart bin network</p>
           </div>
           {!isAdmin && (
-            <Button variant="destructive" onClick={handleEmergencyRequest} disabled={requesting}>
-              <Truck className="mr-2 h-4 w-4" />
-              {requesting ? "Requesting..." : "Emergency Pickup"}
-            </Button>
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-success/0 via-success/30 to-success/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 rounded-md" />
+              <Button 
+                variant="default" 
+                className="relative bg-gradient-to-r from-success to-green-600 hover:from-success/90 hover:to-green-700 text-success-foreground backdrop-blur-sm border border-success/30 hover:border-success/50 shadow-lg hover:shadow-2xl hover:shadow-success/30 hover:scale-105 hover:-translate-y-1 transition-all duration-500" 
+                onClick={handleEmergencyRequest} 
+                disabled={requesting}
+              >
+                <Truck className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="text-xs sm:text-sm font-semibold">{requesting ? "Requesting..." : "Trash Pickup"}</span>
+              </Button>
+            </div>
           )}
         </div>
 
         {/* Summary Stats */}
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
           <StatCard
             title="Total Bins Online"
             value={onlineBins}
-            icon={<Trash2 className="h-6 w-6" />}
+            icon={<Trash2 className="h-5 w-5 sm:h-6 sm:w-6" />}
             trend={{ value: 2, isPositive: true }}
           />
           <StatCard
             title="Bins Full"
             value={fullBins}
-            icon={<AlertTriangle className="h-6 w-6" />}
+            icon={<AlertTriangle className="h-5 w-5 sm:h-6 sm:w-6" />}
             variant="destructive"
           />
           <StatCard
             title="Tamper Alerts"
             value={tamperAlerts}
-            icon={<Activity className="h-6 w-6" />}
+            icon={<Activity className="h-5 w-5 sm:h-6 sm:w-6" />}
             variant="warning"
           />
           <StatCard
             title="Average Fill Level"
             value={`${averageFill}%`}
-            icon={<Gauge className="h-6 w-6" />}
+            icon={<Gauge className="h-5 w-5 sm:h-6 sm:w-6" />}
             variant={averageFill > 75 ? 'warning' : 'success'}
           />
         </div>

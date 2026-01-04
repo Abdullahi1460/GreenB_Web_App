@@ -129,10 +129,11 @@ export const FillTrendChart = () => {
   ];
 
   return (
-    <Card className="h-full">
+    <Card className="h-full border-primary/30 bg-gradient-to-br from-primary/10 via-card to-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/50 transition-all duration-500 group relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
       <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 font-display text-lg">
-          <TrendingUp className="h-5 w-5 text-primary" />
+        <CardTitle className="flex items-center gap-2 font-display text-sm sm:text-lg">
+          <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           Real-time Fill Level Trends
         </CardTitle>
       </CardHeader>

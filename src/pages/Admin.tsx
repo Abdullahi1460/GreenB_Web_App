@@ -140,63 +140,68 @@ export default function Admin() {
                     <span className="text-sm text-muted-foreground">Overview of system health</span>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                    <Card className="border-blue-500/20 bg-gradient-to-br from-card to-blue-500/5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <Card className="border-blue-500/30 bg-gradient-to-br from-blue-500/10 via-card to-blue-600/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-blue-500/20 hover:scale-105 hover:-translate-y-2 hover:border-blue-400/50 transition-all duration-500 group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/0 via-blue-500/10 to-blue-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                            <div className="p-2 bg-blue-500/10 rounded-full">
-                                <Users className="h-4 w-4 text-blue-500" />
+                            <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
+                            <div className="p-1.5 sm:p-2 bg-blue-500/20 rounded-full group-hover:bg-blue-500/30 group-hover:scale-110 transition-all duration-300">
+                                <Users className="h-3 w-3 sm:h-4 sm:w-4 text-blue-500 group-hover:text-blue-400" />
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{statsLoading ? '...' : stats.users}</div>
-                            <p className="text-xs text-muted-foreground">Registered users</p>
+                            <div className="text-xl sm:text-2xl font-bold group-hover:text-blue-400 transition-colors">{statsLoading ? '...' : stats.users}</div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Registered users</p>
                         </CardContent>
                     </Card>
-                    <Card className="border-green-500/20 bg-gradient-to-br from-card to-green-500/5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <Card className="border-green-500/30 bg-gradient-to-br from-green-500/10 via-card to-green-600/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-green-500/20 hover:scale-105 hover:-translate-y-2 hover:border-green-400/50 transition-all duration-500 group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-green-500/0 via-green-500/10 to-green-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-                            <div className="p-2 bg-green-500/10 rounded-full">
-                                <Activity className="h-4 w-4 text-green-500" />
+                            <CardTitle className="text-xs sm:text-sm font-medium">Active Users</CardTitle>
+                            <div className="p-1.5 sm:p-2 bg-green-500/20 rounded-full group-hover:bg-green-500/30 group-hover:scale-110 transition-all duration-300">
+                                <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 group-hover:text-green-400" />
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{statsLoading ? '...' : stats.activeSubs}</div>
-                            <p className="text-xs text-muted-foreground">Active subscriptions</p>
+                            <div className="text-xl sm:text-2xl font-bold group-hover:text-green-400 transition-colors">{statsLoading ? '...' : stats.activeSubs}</div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Active subscriptions</p>
                         </CardContent>
                     </Card>
-                    <Card className="border-orange-500/20 bg-gradient-to-br from-card to-orange-500/5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/10 via-card to-orange-600/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-orange-500/20 hover:scale-105 hover:-translate-y-2 hover:border-orange-400/50 transition-all duration-500 group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Total Bins</CardTitle>
-                            <div className="p-2 bg-orange-500/10 rounded-full">
-                                <Trash2 className="h-4 w-4 text-orange-500" />
+                            <CardTitle className="text-xs sm:text-sm font-medium">Total Bins</CardTitle>
+                            <div className="p-1.5 sm:p-2 bg-orange-500/20 rounded-full group-hover:bg-orange-500/30 group-hover:scale-110 transition-all duration-300">
+                                <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 text-orange-500 group-hover:text-orange-400" />
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{statsLoading ? '...' : stats.bins}</div>
-                            <p className="text-xs text-muted-foreground">Deployed units</p>
+                            <div className="text-xl sm:text-2xl font-bold group-hover:text-orange-400 transition-colors">{statsLoading ? '...' : stats.bins}</div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Deployed units</p>
                         </CardContent>
                     </Card>
-                    <Card className="border-indigo-500/20 bg-gradient-to-br from-card to-indigo-500/5 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+                    <Card className="border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 via-card to-indigo-600/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-indigo-500/20 hover:scale-105 hover:-translate-y-2 hover:border-indigo-400/50 transition-all duration-500 group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/0 via-indigo-500/10 to-indigo-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Revenue</CardTitle>
-                            <div className="p-2 bg-indigo-500/10 rounded-full">
-                                <DollarSign className="h-4 w-4 text-indigo-500" />
+                            <CardTitle className="text-xs sm:text-sm font-medium">Revenue</CardTitle>
+                            <div className="p-1.5 sm:p-2 bg-indigo-500/20 rounded-full group-hover:bg-indigo-500/30 group-hover:scale-110 transition-all duration-300">
+                                <DollarSign className="h-3 w-3 sm:h-4 sm:w-4 text-indigo-500 group-hover:text-indigo-400" />
                             </div>
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">{statsLoading ? '...' : `₦${stats.revenue.toLocaleString()}`}</div>
-                            <p className="text-xs text-muted-foreground">Total earnings</p>
+                            <div className="text-xl sm:text-2xl font-bold group-hover:text-indigo-400 transition-colors">{statsLoading ? '...' : `₦${stats.revenue.toLocaleString()}`}</div>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Total earnings</p>
                         </CardContent>
                     </Card>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-6">
-                    <Card className="col-span-4 border-primary/10 bg-gradient-to-b from-card to-primary/5 animate-in zoom-in-95 fade-in duration-700 delay-75">
-                        <CardHeader>
-                            <CardTitle>Revenue Trend</CardTitle>
+                <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-7 mt-6">
+                    <Card className="lg:col-span-4 border-primary/30 bg-gradient-to-br from-primary/10 via-card to-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-primary/20 hover:border-primary/50 animate-in zoom-in-95 fade-in duration-700 delay-75 transition-all group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                        <CardHeader className="pb-2 sm:pb-6">
+                            <CardTitle className="text-sm sm:text-base">Revenue Trend</CardTitle>
                         </CardHeader>
-                        <CardContent className="h-[300px] w-full pl-0">
+                        <CardContent className="h-[200px] sm:h-[300px] w-full pl-0">
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
@@ -210,13 +215,13 @@ export default function Admin() {
                                         dataKey="date"
                                         axisLine={false}
                                         tickLine={false}
-                                        className="text-xs text-muted-foreground"
+                                        className="text-[10px] sm:text-xs text-muted-foreground"
                                         tickMargin={10}
                                     />
                                     <YAxis
                                         axisLine={false}
                                         tickLine={false}
-                                        className="text-xs text-muted-foreground"
+                                        className="text-[10px] sm:text-xs text-muted-foreground"
                                         tickFormatter={(value) => `₦${value}`}
                                     />
                                     <Tooltip
@@ -240,19 +245,20 @@ export default function Admin() {
                         </CardContent>
                     </Card>
 
-                    <Card className="col-span-3 border-purple-500/20 bg-gradient-to-br from-card to-purple-500/5 animate-in zoom-in-95 fade-in duration-700 delay-150">
-                        <CardHeader>
-                            <CardTitle>Subscription Status</CardTitle>
+                    <Card className="lg:col-span-3 border-purple-500/30 bg-gradient-to-br from-purple-500/10 via-card to-purple-600/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-purple-500/20 hover:border-purple-400/50 animate-in zoom-in-95 fade-in duration-700 delay-150 transition-all group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/10 to-purple-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                        <CardHeader className="pb-2 sm:pb-6">
+                            <CardTitle className="text-sm sm:text-base">Subscription Status</CardTitle>
                         </CardHeader>
-                        <CardContent className="h-[300px] w-full">
+                        <CardContent className="h-[200px] sm:h-[300px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={pieData}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
+                                        innerRadius={40}
+                                        outerRadius={60}
                                         paddingAngle={5}
                                         dataKey="value"
                                         animationBegin={0}
@@ -266,7 +272,7 @@ export default function Admin() {
                                         contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))', borderRadius: '8px' }}
                                         itemStyle={{ color: 'hsl(var(--foreground))' }}
                                     />
-                                    <Legend verticalAlign="bottom" height={36} />
+                                    <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '12px' }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </CardContent>
