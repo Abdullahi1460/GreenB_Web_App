@@ -176,30 +176,30 @@ const PlanCard = ({ plan, billingCycle }: { plan: any, billingCycle: 'monthly' |
                     Popular
                 </div>
             )}
-            <CardHeader className="pb-4 sm:pb-8">
-                <CardTitle className="text-lg sm:text-2xl font-bold">{plan.name}</CardTitle>
-                <CardDescription className="text-xs sm:text-base mt-1 sm:mt-2">{plan.description}</CardDescription>
+            <CardHeader className="pb-3 sm:pb-4 md:pb-8">
+                <CardTitle className="text-base sm:text-lg md:text-2xl font-bold">{plan.name}</CardTitle>
+                <CardDescription className="text-[11px] sm:text-xs md:text-base mt-1 sm:mt-2">{plan.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex-1">
-                <div className="mb-4 sm:mb-8 flex items-baseline">
-                    <span className="text-2xl sm:text-4xl font-extrabold tracking-tight">{priceDisplay}</span>
-                    <span className="text-muted-foreground font-medium text-xs sm:text-base ml-1">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+            <CardContent className="flex-1 px-4 sm:px-6">
+                <div className="mb-3 sm:mb-4 md:mb-8 flex items-baseline">
+                    <span className="text-xl sm:text-2xl md:text-4xl font-extrabold tracking-tight">{priceDisplay}</span>
+                    <span className="text-muted-foreground font-medium text-[10px] sm:text-xs md:text-base ml-1">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
                 </div>
-                <ul className="space-y-2 sm:space-y-4">
+                <ul className="space-y-1.5 sm:space-y-2 md:space-y-4">
                     {plan.features.map((feature: string, i: number) => (
                         <li key={i} className="flex items-start">
-                            <div className={`mt-0.5 mr-2 sm:mr-3 flex h-4 w-4 sm:h-5 sm:w-5 items-center justify-center rounded-full ${isPopular ? 'bg-primary/20 text-primary' : 'bg-green-500/10 text-green-600'}`}>
-                                <Check className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                            <div className={`mt-0.5 mr-1.5 sm:mr-2 md:mr-3 flex h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 items-center justify-center rounded-full flex-shrink-0 ${isPopular ? 'bg-primary/20 text-primary' : 'bg-green-500/10 text-green-600'}`}>
+                                <Check className="h-2 w-2 sm:h-2.5 sm:w-2.5 md:h-3 md:w-3" />
                             </div>
-                            <span className="text-xs sm:text-sm text-foreground/80">{feature}</span>
+                            <span className="text-[11px] sm:text-xs md:text-sm text-foreground/80 leading-tight">{feature}</span>
                         </li>
                     ))}
                 </ul>
             </CardContent>
-            <CardFooter className="pt-4 sm:pt-8">
+            <CardFooter className="pt-3 sm:pt-4 md:pt-8 px-4 sm:px-6">
                 <Button
                     onClick={handleBuy}
-                    className={`w-full h-9 sm:h-11 text-sm sm:text-base font-semibold shadow-md transition-all ${isPopular ? 'bg-gradient-to-r from-primary to-green-600 hover:from-primary/90 hover:to-green-700 hover:shadow-lg' : ''}`}
+                    className={`w-full h-8 sm:h-9 md:h-11 text-xs sm:text-sm md:text-base font-semibold shadow-md transition-all ${isPopular ? 'bg-gradient-to-r from-primary to-green-600 hover:from-primary/90 hover:to-green-700 hover:shadow-lg' : ''}`}
                     variant={isPopular ? 'default' : 'outline'}
                 >
                     {isPopular ? `Get Started` : `Choose ${plan.name}`}
@@ -237,7 +237,7 @@ export default function PricingPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 md:gap-6 lg:grid-cols-3 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3 md:gap-6 lg:grid-cols-3 max-w-6xl mx-auto px-4 sm:px-0">
                     {plans.map((plan) => (
                         <PlanCard key={plan.id} plan={plan} billingCycle={billingCycle} />
                     ))}
