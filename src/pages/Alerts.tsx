@@ -126,48 +126,64 @@ const Alerts = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-card">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Bell className="h-5 w-5 text-primary" />
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <Card className="border-primary/30 bg-gradient-to-br from-primary/10 via-card to-primary/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-primary/20 hover:scale-105 hover:-translate-y-2 hover:border-primary/50 transition-all duration-500 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/10 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+            <CardContent className="flex flex-col items-start gap-2 p-4 sm:p-6">
+              <div className="flex w-full items-center justify-between">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-primary/20 group-hover:bg-primary/30 group-hover:scale-110 transition-all duration-300">
+                  <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-primary group-hover:text-primary-foreground transition-colors" />
+                </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Alerts</p>
-                <p className="font-display text-2xl font-bold">{alertStats.total}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium group-hover:text-primary-foreground/70 transition-colors">Total Alerts</p>
+                <p className="font-display text-xl sm:text-3xl font-bold group-hover:text-primary-foreground transition-colors">{alertStats.total}</p>
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-destructive/5 border-destructive/20">
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
-                <AlertCircle className="h-5 w-5 text-destructive" />
+
+          <Card className="border-destructive/30 bg-gradient-to-br from-destructive/10 via-card to-destructive/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-destructive/20 hover:scale-105 hover:-translate-y-2 hover:border-destructive/50 transition-all duration-500 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-destructive/0 via-destructive/10 to-destructive/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+            <CardContent className="flex flex-col items-start gap-2 p-4 sm:p-6">
+              <div className="flex w-full items-center justify-between">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-destructive/20 group-hover:bg-destructive/30 group-hover:scale-110 transition-all duration-300">
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-destructive group-hover:text-destructive-foreground transition-colors" />
+                </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Unacknowledged</p>
-                <p className="font-display text-2xl font-bold text-destructive">{alertStats.new}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium group-hover:text-destructive-foreground/70 transition-colors">New Alerts</p>
+                <p className="font-display text-xl sm:text-3xl font-bold text-destructive group-hover:text-destructive-foreground transition-colors">{alertStats.new}</p>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10">
-                <AlertCircle className="h-5 w-5 text-destructive" />
+
+          <Card className="border-orange-500/30 bg-gradient-to-br from-orange-500/10 via-card to-orange-600/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-orange-500/20 hover:scale-105 hover:-translate-y-2 hover:border-orange-400/50 transition-all duration-500 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/0 via-orange-500/10 to-orange-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+            <CardContent className="flex flex-col items-start gap-2 p-4 sm:p-6">
+              <div className="flex w-full items-center justify-between">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-orange-500/20 group-hover:bg-orange-500/30 group-hover:scale-110 transition-all duration-300">
+                  <AlertCircle className="h-4 w-4 sm:h-5 sm:w-5 text-orange-500 group-hover:text-orange-400 transition-colors" />
+                </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Full Bin Alerts</p>
-                <p className="font-display text-2xl font-bold">{alertStats.full}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium group-hover:text-orange-400/70 transition-colors">Full Bins</p>
+                <p className="font-display text-xl sm:text-3xl font-bold group-hover:text-orange-400 transition-colors">{alertStats.full}</p>
               </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="flex items-center gap-4 p-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10">
-                <AlertTriangle className="h-5 w-5 text-warning" />
+
+          <Card className="border-warning/30 bg-gradient-to-br from-warning/10 via-card to-warning/5 backdrop-blur-sm hover:shadow-2xl hover:shadow-warning/20 hover:scale-105 hover:-translate-y-2 hover:border-warning/50 transition-all duration-500 group relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-warning/0 via-warning/10 to-warning/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+            <CardContent className="flex flex-col items-start gap-2 p-4 sm:p-6">
+              <div className="flex w-full items-center justify-between">
+                <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-warning/20 group-hover:bg-warning/30 group-hover:scale-110 transition-all duration-300">
+                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-warning group-hover:text-warning-foreground transition-colors" />
+                </div>
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Tamper Alerts</p>
-                <p className="font-display text-2xl font-bold">{alertStats.tamper}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium group-hover:text-warning-foreground/70 transition-colors">Tamper Alert</p>
+                <p className="font-display text-xl sm:text-3xl font-bold group-hover:text-warning-foreground transition-colors">{alertStats.tamper}</p>
               </div>
             </CardContent>
           </Card>
