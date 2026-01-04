@@ -8,18 +8,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, User, ArrowLeft } from "lucide-react";
 import Logo from "@/components/ui/Logo";
 
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, sendEmailVerification, sendPasswordResetEmail } from "firebase/auth";
+import { ref, set } from "firebase/database";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -88,10 +89,17 @@ const Auth = () => {
         }
 
         const cred = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+
+        // Create user record in RTDB
+        await set(ref(db, `users/${cred.user.uid}`), {
+          email: formData.email,
+          role: 'user'
+        });
+
         if (formData.name) {
           await updateProfile(cred.user, { displayName: formData.name });
         }
-        try { await sendEmailVerification(cred.user); } catch {}
+        try { await sendEmailVerification(cred.user); } catch { }
 
         toast({
           title: "Account Created",
@@ -121,162 +129,162 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-6">
       <Card className="w-full max-w-md border-border/50 shadow-lg">
-          <CardHeader className="text-center pb-4">
-            <div className="flex justify-center mb-2">
-              <Logo size="sm" rounded alt="GreenB" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-foreground">
-              {isSignUp ? "Create an Account" : "Welcome Back"}
-            </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              {isSignUp 
-                ? "Sign up to start managing your smart bins" 
-                : "Sign in to access your dashboard"}
-            </CardDescription>
-          </CardHeader>
+        <CardHeader className="text-center pb-4">
+          <div className="flex justify-center mb-2">
+            <Logo size="sm" rounded alt="GreenB" />
+          </div>
+          <CardTitle className="text-2xl font-bold text-foreground">
+            {isSignUp ? "Create an Account" : "Welcome Back"}
+          </CardTitle>
+          <CardDescription className="text-muted-foreground">
+            {isSignUp
+              ? "Sign up to start managing your smart bins"
+              : "Sign in to access your dashboard"}
+          </CardDescription>
+        </CardHeader>
 
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                {isSignUp && (
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-foreground">Full Name</Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="name"
-                        name="name"
-                        type="text"
-                        placeholder="John Doe"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="pl-10 bg-background border-input"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="pl-10 bg-background border-input"
-                    />
-                  </div>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-foreground">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    name="name"
+                    type="text"
+                    placeholder="John Doe"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="pl-10 bg-background border-input"
+                  />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-foreground">Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      className="pl-10 pr-10 bg-background border-input"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {isSignUp && (
-                  <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        className="pl-10 bg-background border-input"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {!isSignUp && (
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        if (!formData.email) {
-                          toast({
-                            title: "Enter your email",
-                            description: "Please provide your email to reset your password.",
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-                        try {
-                          await sendPasswordResetEmail(auth, formData.email);
-                          toast({
-                            title: "Password Reset Sent",
-                            description: "Check your email for reset instructions.",
-                          });
-                        } catch (err: any) {
-                          toast({
-                            title: "Error",
-                            description: err?.message ?? "Failed to send reset email",
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      className="text-sm text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                )}
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center gap-2">
-                      <span className="w-4 h-4 border-2 border-primary-foreground/50 border-t-primary-foreground rounded-full animate-spin" />
-                      {isSignUp ? "Creating Account..." : "Signing In..."}
-                    </span>
-                  ) : (
-                    isSignUp ? "Create Account" : "Sign In"
-                  )}
-                </Button>
-              </form>
-
-              <div className="mt-6 text-center">
-                <p className="text-muted-foreground">
-                  {isSignUp ? "Already have an account?" : "Don't have an account?"}
-                  {" "}
-                  <button
-                    type="button"
-                    onClick={() => setIsSignUp(!isSignUp)}
-                    className="text-primary hover:underline font-medium"
-                  >
-                    {isSignUp ? "Sign In" : "Sign Up"}
-                  </button>
-                </p>
               </div>
-            </CardContent>
-          </Card>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-foreground">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  className="pl-10 bg-background border-input"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-foreground">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  className="pl-10 pr-10 bg-background border-input"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {isSignUp && (
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-foreground">Confirm Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    className="pl-10 bg-background border-input"
+                  />
+                </div>
+              </div>
+            )}
+
+            {!isSignUp && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!formData.email) {
+                      toast({
+                        title: "Enter your email",
+                        description: "Please provide your email to reset your password.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    try {
+                      await sendPasswordResetEmail(auth, formData.email);
+                      toast({
+                        title: "Password Reset Sent",
+                        description: "Check your email for reset instructions.",
+                      });
+                    } catch (err: any) {
+                      toast({
+                        title: "Error",
+                        description: err?.message ?? "Failed to send reset email",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-primary-foreground/50 border-t-primary-foreground rounded-full animate-spin" />
+                  {isSignUp ? "Creating Account..." : "Signing In..."}
+                </span>
+              ) : (
+                isSignUp ? "Create Account" : "Sign In"
+              )}
+            </Button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <p className="text-muted-foreground">
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}
+              {" "}
+              <button
+                type="button"
+                onClick={() => setIsSignUp(!isSignUp)}
+                className="text-primary hover:underline font-medium"
+              >
+                {isSignUp ? "Sign In" : "Sign Up"}
+              </button>
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

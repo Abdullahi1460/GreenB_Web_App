@@ -6,8 +6,14 @@ import { subscribeDevices, subscribeEvents } from '@/services/realtime';
 import { format, parseISO, startOfHour, addHours } from 'date-fns';
 import { Device } from '@/types/device';
 
+interface ChartPoint {
+  time: string;
+  average?: number;
+  [key: string]: number | string | undefined;
+}
+
 export const FillTrendChart = () => {
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<ChartPoint[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
 
   useEffect(() => {
@@ -24,7 +30,7 @@ export const FillTrendChart = () => {
       if (!events || events.length === 0) {
         // Fallback: if no events, use current devices state to show at least something
         const now = format(new Date(), 'HH:mm');
-        const currentPoint: any = { time: now };
+        const currentPoint: ChartPoint = { time: now };
         let totalFill = 0;
         let count = 0;
         
@@ -96,7 +102,7 @@ export const FillTrendChart = () => {
       // If we still have very little data (e.g. < 2 points), append current state
       if (chartData.length < 2 && devices.length > 0) {
            const now = format(new Date(), 'HH:mm');
-           const currentPoint: any = { time: now };
+           const currentPoint: ChartPoint = { time: now };
            let sum = 0;
            devices.forEach(d => {
                currentPoint[d.id] = d.binPercentage;

@@ -15,6 +15,11 @@ export interface Device {
   bootCount: number;
   randomValue?: number;
   status: 'online' | 'offline' | 'maintenance';
+  name?: string;
+  type?: string;
+  location?: string;
+  ownerId?: string;
+  ownerEmail?: string;
 }
 
 export interface Alert {

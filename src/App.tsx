@@ -14,6 +14,9 @@ import MapView from "./pages/MapView";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import Pricing from "./pages/Pricing";
+import Billing from "./pages/Billing";
+import Admin from "./pages/Admin";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 
@@ -39,6 +42,9 @@ const App = () => (
               <Route path="/map" element={<MapView />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/billing" element={<Billing />} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/admin" element={<Admin />} />
             </Route>
 
             <Route path="*" element={<NotFound />} />

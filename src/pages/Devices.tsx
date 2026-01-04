@@ -20,7 +20,9 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { usedFallback as firebaseUsingDemo } from '@/lib/firebase';
+import { usedFallback as firebaseUsingDemo, auth, db } from '@/lib/firebase';
+import { ref, get, onValue } from 'firebase/database';
+import { onAuthStateChanged } from 'firebase/auth';
 
 type SortKey = 'id' | 'binPercentage' | 'batteryLevel' | 'timestamp';
 type SortOrder = 'asc' | 'desc';
@@ -34,7 +36,9 @@ const Devices = () => {
   const [realtimeDevices, setRealtimeDevices] = useState<Device[] | null>(null);
   const [openAdd, setOpenAdd] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [addForm, setAddForm] = useState({ id: '', latitude: '', longitude: '', binPercentage: '', batteryLevel: '' });
+  const [addForm, setAddForm] = useState({ id: '', name: '', type: '', location: '' });
+  const [role, setRole] = useState<'admin' | 'user'>('user');
+  const [uid, setUid] = useState<string>('');
   const { toast } = useToast();
 
   const { data: liveDevices, isLoading, isError, error } = useQuery({
@@ -44,12 +48,27 @@ const Devices = () => {
   });
 
   useEffect(() => {
-    const unsubscribe = subscribeDevices((devices) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUid(user.uid);
+        const roleRef = ref(db, `users/${user.uid}/role`);
+        onValue(roleRef, (snapshot) => {
+          const r = snapshot.val();
+          setRole(r === 'admin' ? 'admin' : 'user');
+        });
+      } else {
+        setUid('');
+        setRole('user');
+      }
+    });
+
+    const unsubscribeDevices = subscribeDevices((devices) => {
       setRealtimeDevices(devices);
     });
+
     return () => {
-      // Firebase onValue returns unsubscribe function
-      if (typeof unsubscribe === 'function') unsubscribe();
+      unsubscribeAuth();
+      if (typeof unsubscribeDevices === 'function') unsubscribeDevices();
     };
   }, []);
 
@@ -62,23 +81,30 @@ const Devices = () => {
 
     let list = [...base];
 
+    // Filter by Owner unless Admin
+    if (role !== 'admin' && uid) {
+      list = list.filter(d => d.ownerId === uid);
+    }
+
     // Search filter
     if (search) {
-      list = list.filter(d => 
-        d.id.toLowerCase().includes(search.toLowerCase())
+      list = list.filter(d =>
+        d.id.toLowerCase().includes(search.toLowerCase()) ||
+        d.name?.toLowerCase().includes(search.toLowerCase()) ||
+        d.location?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
     // Full filter
     if (filterFull !== 'all') {
-      list = list.filter(d => 
+      list = list.filter(d =>
         filterFull === 'full' ? d.isFull : !d.isFull
       );
     }
 
     // Tamper filter
     if (filterTamper !== 'all') {
-      list = list.filter(d => 
+      list = list.filter(d =>
         filterTamper === 'tampered' ? d.tamperDetected : !d.tamperDetected
       );
     }
@@ -144,49 +170,47 @@ const Devices = () => {
                   <div className="grid gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="add-id">Device ID</Label>
-                      <Input id="add-id" value={addForm.id} onChange={(e) => setAddForm({ ...addForm, id: e.target.value })} placeholder="device123" />
+                      <Input id="add-id" value={addForm.id} onChange={(e) => setAddForm({ ...addForm, id: e.target.value })} placeholder="Ex: GNB-001" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="add-lat">Latitude</Label>
-                        <Input id="add-lat" value={addForm.latitude} onChange={(e) => setAddForm({ ...addForm, latitude: e.target.value })} placeholder="11.973206" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="add-lng">Longitude</Label>
-                        <Input id="add-lng" value={addForm.longitude} onChange={(e) => setAddForm({ ...addForm, longitude: e.target.value })} placeholder="8.554036" />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="add-type">Device Type</Label>
+                      <Input id="add-type" value={addForm.type} onChange={(e) => setAddForm({ ...addForm, type: e.target.value })} placeholder="Ex: Sensor, Smart Bin, Truck" />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="add-fill">Initial Fill (%)</Label>
-                        <Input id="add-fill" value={addForm.binPercentage} onChange={(e) => setAddForm({ ...addForm, binPercentage: e.target.value })} placeholder="0" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="add-battery">Battery (%)</Label>
-                        <Input id="add-battery" value={addForm.batteryLevel} onChange={(e) => setAddForm({ ...addForm, batteryLevel: e.target.value })} placeholder="100" />
-                      </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="add-name">Device Name</Label>
+                      <Input id="add-name" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="Ex: Main Office Bin" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="add-location">Device Location</Label>
+                      <Input id="add-location" value={addForm.location} onChange={(e) => setAddForm({ ...addForm, location: e.target.value })} placeholder="Ex: 55 Marina Road, Lagos" />
                     </div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setOpenAdd(false)}>Cancel</Button>
                     <Button
                       onClick={async () => {
-                        if (!addForm.id || !addForm.latitude || !addForm.longitude) {
-                          toast({ title: 'Missing fields', description: 'Provide ID, latitude and longitude', variant: 'destructive' });
+                        if (!addForm.id || !addForm.name || !addForm.type || !addForm.location) {
+                          toast({ title: 'Missing fields', description: 'Please fill all fields', variant: 'destructive' });
                           return;
                         }
                         setSaving(true);
                         try {
+                          const user = auth.currentUser;
+                          if (!user) throw new Error("User not authenticated");
+
                           await createDevice({
                             id: addForm.id,
-                            latitude: Number(addForm.latitude),
-                            longitude: Number(addForm.longitude),
-                            binPercentage: addForm.binPercentage ? Number(addForm.binPercentage) : 0,
-                            batteryLevel: addForm.batteryLevel ? Number(addForm.batteryLevel) : 100,
+                            name: addForm.name,
+                            type: addForm.type,
+                            location: addForm.location,
+                            ownerId: user.uid,
+                            ownerEmail: user.email || '',
+                            latitude: 0,
+                            longitude: 0,
                           });
                           toast({ title: 'Device added', description: `Created ${addForm.id}` });
                           setOpenAdd(false);
-                          setAddForm({ id: '', latitude: '', longitude: '', binPercentage: '', batteryLevel: '' });
+                          setAddForm({ id: '', name: '', type: '', location: '' });
                         } catch (err: unknown) {
                           const message = err instanceof Error ? err.message : String(err);
                           toast({ title: 'Error', description: message ?? 'Failed to add device', variant: 'destructive' });
@@ -337,7 +361,10 @@ const Devices = () => {
                 <TableBody>
                   {devices.map((device) => (
                     <TableRow key={device.id} className="hover:bg-muted/30">
-                      <TableCell className="font-medium">{device.id}</TableCell>
+                      <TableCell className="font-medium">
+                        <div>{device.name || device.id}</div>
+                        <div className="text-xs text-muted-foreground">{device.id}</div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <TrashBinIcon percentage={device.binPercentage} size="sm" isFull={device.isFull} />
@@ -362,7 +389,7 @@ const Devices = () => {
                         <TamperBadge tamperDetected={device.tamperDetected} />
                       </TableCell>
                       <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                        {device.latitude.toFixed(4)}, {device.longitude.toFixed(4)}
+                        {device.location || `${device.latitude.toFixed(4)}, ${device.longitude.toFixed(4)}`}
                       </TableCell>
                       <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                         {format(new Date(device.timestamp), 'MMM d, HH:mm')}

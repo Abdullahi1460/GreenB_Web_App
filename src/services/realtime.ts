@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { ref, get, onValue, DataSnapshot, set } from 'firebase/database';
+import { ref, get, onValue, DataSnapshot, set, query, orderByChild, equalTo } from 'firebase/database';
 import type { Device, Alert } from '@/types/device';
 
 function snapshotToArray<T extends { id: string }>(snapshot: DataSnapshot): T[] {
@@ -11,8 +11,13 @@ function snapshotToArray<T extends { id: string }>(snapshot: DataSnapshot): T[] 
   return Object.keys(val).map((key) => ({ id: key, ...val[key] }));
 }
 
-export async function fetchDevices(): Promise<Device[]> {
-  const snap = await get(ref(db, 'devices'));
+export async function fetchDevices(ownerId?: string): Promise<Device[]> {
+  const dbRef = ref(db, 'devices');
+  const q = ownerId
+    ? query(dbRef, orderByChild('ownerId'), equalTo(ownerId))
+    : dbRef;
+
+  const snap = await get(q);
   const items = snapshotToArray<any>(snap);
   return items.map((d: any) => ({
     id: String(d.id),
@@ -31,6 +36,12 @@ export async function fetchDevices(): Promise<Device[]> {
     bootCount: Number(d.bootCount ?? 0),
     randomValue: d.randomValue !== undefined ? Number(d.randomValue) : undefined,
     status: (d.status as Device['status']) ?? 'online',
+    // New fields
+    name: d.name,
+    type: d.type,
+    location: d.location,
+    ownerId: d.ownerId,
+    ownerEmail: d.ownerEmail,
   }));
 }
 
@@ -49,9 +60,13 @@ export async function fetchAlerts(): Promise<Alert[]> {
   }));
 }
 
-export function subscribeDevices(onDevices: (devices: Device[]) => void) {
-  const devicesRef = ref(db, 'devices');
-  return onValue(devicesRef, (snapshot) => {
+export function subscribeDevices(onDevices: (devices: Device[]) => void, ownerId?: string) {
+  const dbRef = ref(db, 'devices');
+  const q = ownerId
+    ? query(dbRef, orderByChild('ownerId'), equalTo(ownerId))
+    : dbRef;
+
+  return onValue(q, (snapshot) => {
     const items = snapshotToArray<any>(snapshot);
     onDevices(items.map((d: any) => ({
       id: String(d.id),
@@ -70,6 +85,11 @@ export function subscribeDevices(onDevices: (devices: Device[]) => void) {
       bootCount: Number(d.bootCount ?? 0),
       randomValue: d.randomValue !== undefined ? Number(d.randomValue) : undefined,
       status: (d.status as Device['status']) ?? 'online',
+      name: d.name,
+      type: d.type,
+      location: d.location,
+      ownerId: d.ownerId,
+      ownerEmail: d.ownerEmail,
     })));
   });
 }
@@ -166,16 +186,21 @@ export function subscribeDevice(id: string, onDevice: (device: Device | null) =>
 
 export async function createDevice(input: {
   id: string;
-  latitude: number;
-  longitude: number;
+  name?: string;
+  type?: string;
+  location?: string;
+  ownerId?: string;
+  ownerEmail?: string;
+  latitude?: number;
+  longitude?: number;
   binPercentage?: number;
   batteryLevel?: number;
 }) {
   const deviceId = String(input.id).trim();
   if (!deviceId) throw new Error('Device ID is required');
-  const lat = Number(input.latitude);
-  const lng = Number(input.longitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error('Latitude/Longitude must be valid numbers');
+  const lat = Number(input.latitude ?? 0);
+  const lng = Number(input.longitude ?? 0);
+
   const existing = await get(ref(db, `devices/${deviceId}`));
   if (existing.exists()) throw new Error('Device already exists');
   const now = new Date().toISOString();
@@ -183,6 +208,11 @@ export async function createDevice(input: {
   const battery = Number(input.batteryLevel ?? 100);
   const payload = {
     id: deviceId,
+    name: input.name ?? deviceId,
+    type: input.type ?? 'Smart Bin',
+    location: input.location ?? '',
+    ownerId: input.ownerId ?? '',
+    ownerEmail: input.ownerEmail ?? '',
     binPercentage: bin,
     isFull: bin >= 100,
     latitude: lat,
@@ -198,20 +228,10 @@ export async function createDevice(input: {
   } as const;
   await set(ref(db, `devices/${deviceId}`), payload);
   return {
-    id: deviceId,
-    binPercentage: bin,
-    isFull: bin >= 100,
-    latitude: lat,
-    longitude: lng,
+    ...payload,
     altitude: undefined,
-    tamperDetected: false,
-    batteryLevel: battery,
-    batteryVoltage: 0,
-    timestamp: now,
     gpsTime: undefined,
     message: undefined,
-    wakeupReason: 0,
-    bootCount: 0,
     randomValue: undefined,
     status: 'online' as Device['status'],
   } as Device;
