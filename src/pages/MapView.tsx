@@ -34,6 +34,18 @@ const MapView = () => {
     enabled: role === 'admin' || !!uid,
   });
 
+  const handleDeviceSelect = (device: Device) => {
+    setSelectedDevice(device);
+    if (mapRef.current && typeof device.longitude === 'number' && typeof device.latitude === 'number') {
+      mapRef.current.flyTo({
+        center: [device.longitude, device.latitude],
+        zoom: 15,
+        essential: true,
+        duration: 2000
+      });
+    }
+  };
+
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -72,10 +84,10 @@ const MapView = () => {
   const MAPTILER_KEY = (import.meta as any).env?.VITE_MAPTILER_KEY || 'tBvtabTNxhFc7RfCBn1T';
 
   // Helper for device list item color
-  const getMarkerColor = (device: Device) => {
-    if (device.isFull) return 'bg-destructive';
-    if (device.binPercentage >= 75) return 'bg-warning';
-    return 'bg-success';
+  const getStatusConfig = (device: Device) => {
+    if (device.isFull) return { color: '#EF4444', bg: 'bg-destructive', shadow: 'shadow-destructive/50', glow: 'bg-destructive' };
+    if (device.binPercentage >= 75) return { color: '#F59E0B', bg: 'bg-warning', shadow: 'shadow-warning/50', glow: 'bg-warning' };
+    return { color: '#22C55E', bg: 'bg-success', shadow: 'shadow-success/50', glow: 'bg-success' };
   };
 
   // Initialize map once
@@ -84,7 +96,7 @@ const MapView = () => {
     try {
       const map = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
+        style: `https://api.maptiler.com/maps/chace/style.json?key=${MAPTILER_KEY}`,
         center: [0, 0],
         zoom: 2,
       });
@@ -113,11 +125,31 @@ const MapView = () => {
 
       devices.forEach((device) => {
         if (typeof device.longitude !== 'number' || typeof device.latitude !== 'number') return;
-        const color = device.isFull ? '#EF4444' : device.binPercentage >= 75 ? '#F59E0B' : '#22C55E';
-        const marker = new maplibregl.Marker({ color })
+        
+        const config = getStatusConfig(device);
+        
+        // Create custom glowing marker
+        const el = document.createElement('div');
+        el.className = 'relative flex items-center justify-center cursor-pointer group';
+        
+        const halo = document.createElement('div');
+        halo.className = cn("absolute h-10 w-10 rounded-full animate-ping-slow opacity-30", config.bg);
+        
+        const dot = document.createElement('div');
+        dot.className = cn(
+          "relative h-4 w-4 rounded-full border-2 border-white shadow-lg animate-marker-pulse transform transition-transform group-hover:scale-125",
+          config.bg,
+          config.shadow
+        );
+        
+        el.appendChild(halo);
+        el.appendChild(dot);
+
+        const marker = new maplibregl.Marker({ element: el })
           .setLngLat([device.longitude, device.latitude])
           .addTo(map);
-        marker.getElement().addEventListener('click', () => setSelectedDevice(device));
+        
+        el.addEventListener('click', () => handleDeviceSelect(device));
         markersRef.current.push(marker);
       });
 
@@ -146,20 +178,35 @@ const MapView = () => {
           <p className="text-muted-foreground">City-wide overview of all GreenB devices</p>
         </div>
 
-        <FeatureGuard requiredPlan="professional">
+        <FeatureGuard requiredPlan="professional" allowTeaser>
           <div className="grid gap-6 lg:grid-cols-4">
             {/* Map */}
-            <Card className="lg:col-span-3">
-              <CardHeader className="pb-2">
+            <Card className="lg:col-span-3 border-primary/20 bg-card/60 backdrop-blur-md overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+              <CardHeader className="pb-2 border-b border-border/50">
                 <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 font-display text-lg">
-                    <MapPin className="h-5 w-5 text-primary" />
+                  <div className="flex items-center gap-2 font-display text-lg group">
+                    <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                      <MapPin className="h-5 w-5 text-primary group-hover:animate-bounce" />
+                    </div>
                     Device Locations
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge className="bg-success text-success-foreground">OK</Badge>
-                    <Badge className="bg-warning text-warning-foreground">≥75%</Badge>
-                    <Badge className="bg-destructive text-destructive-foreground">Full</Badge>
+                    <div className="flex items-center gap-2 px-3 py-1 bg-background/50 backdrop-blur-sm rounded-full border border-border/50">
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground">OK</span>
+                      </div>
+                      <div className="h-4 w-[1px] bg-border/50 mx-1" />
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-warning shadow-[0_0_8px_rgba(245,158,11,0.6)]" />
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground">≥75%</span>
+                      </div>
+                      <div className="h-4 w-[1px] bg-border/50 mx-1" />
+                      <div className="flex items-center gap-1.5">
+                        <div className="h-2 w-2 rounded-full bg-destructive shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
+                        <span className="text-[10px] uppercase font-bold text-muted-foreground">Full</span>
+                      </div>
+                    </div>
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -172,30 +219,32 @@ const MapView = () => {
 
                   {/* Selected device popup */}
                   {selectedDevice && (
-                    <div className="absolute bottom-4 left-4 right-4 z-30 animate-slide-in sm:left-auto sm:w-80">
-                      <Card className="shadow-lg">
-                        <CardHeader className="pb-2">
+                    <div className="absolute bottom-4 left-4 right-4 z-30 animate-in fade-in slide-in-from-bottom-4 duration-500 sm:left-auto sm:w-80">
+                      <Card className="shadow-2xl border-primary/30 bg-card/80 backdrop-blur-lg group relative overflow-hidden">
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                        <CardHeader className="pb-2 border-b border-border/50">
                           <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-2 text-base">
+                            <CardTitle className="flex items-center gap-2 text-base font-bold">
                               <Trash2 className="h-4 w-4 text-primary" />
-                              {selectedDevice.id}
+                              {selectedDevice.name || selectedDevice.id}
                             </CardTitle>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-6 w-6"
+                              className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive transition-colors"
                               onClick={() => setSelectedDevice(null)}
                             >
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
+                          <p className="text-[10px] text-muted-foreground font-mono">{selectedDevice.id}</p>
                         </CardHeader>
-                        <CardContent className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm text-muted-foreground">Fill Level</span>
+                        <CardContent className="space-y-4 pt-4">
+                          <div className="flex items-center justify-between group/item">
+                            <span className="text-sm text-muted-foreground group-hover/item:text-foreground transition-colors">Fill Level</span>
                             <span className={cn(
-                              'font-semibold',
-                              selectedDevice.isFull ? 'text-destructive' : selectedDevice.binPercentage >= 75 ? 'text-warning' : 'text-success'
+                              'font-bold text-base transition-all group-hover/item:scale-110',
+                              selectedDevice.isFull ? 'text-destructive' : selectedDevice.binPercentage >= 75 ? 'text-orange-500' : 'text-success'
                             )}>
                               {selectedDevice.binPercentage}%
                             </span>
@@ -207,18 +256,22 @@ const MapView = () => {
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-muted-foreground">Battery</span>
                             <div className="flex items-center gap-2">
-                              <BatteryIcon percentage={selectedDevice.batteryLevel} size="sm" />
-                              <span className="text-sm font-medium">{selectedDevice.batteryLevel}%</span>
+                              <BatteryIcon percentage={selectedDevice.batteryLevel} size="xs" />
+                              <span className="text-sm font-bold">{selectedDevice.batteryLevel}%</span>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-muted-foreground">Tamper</span>
                             <TamperBadge tamperDetected={selectedDevice.tamperDetected} />
                           </div>
-                          <Link to={`/devices/${selectedDevice.id}`}>
-                            <Button variant="outline" size="sm" className="w-full">
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground italic border-t border-border/30 pt-2">
+                             <span>Location: {selectedDevice.location || 'Unknown'}</span>
+                             <span>{new Date(selectedDevice.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          <Link to={`/devices/${selectedDevice.id}`} className="block">
+                            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
                               <ExternalLink className="mr-2 h-4 w-4" />
-                              View Details
+                              View Deep Analytics
                             </Button>
                           </Link>
                         </CardContent>
@@ -238,46 +291,68 @@ const MapView = () => {
             </Card>
 
             {/* Device List */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="font-display text-base">All Devices</CardTitle>
+            <Card className="border-primary/20 bg-card/40 backdrop-blur-md overflow-hidden">
+              <CardHeader className="pb-2 border-b border-border/30 bg-background/20">
+                <CardTitle className="font-display text-base flex items-center justify-between">
+                  All Devices
+                  <Badge variant="outline" className="text-[10px] bg-primary/10 border-primary/20 text-primary">
+                    {devices.length} Live
+                  </Badge>
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 max-h-[500px] overflow-y-auto">
-                {devices.map((device) => (
-                  <button
-                    key={device.id}
-                    onClick={() => setSelectedDevice(device)}
-                    className={cn(
-                      'w-full rounded-lg border border-border p-3 text-left transition-all hover:bg-muted/50',
-                      selectedDevice?.id === device.id && 'border-primary bg-primary/5'
-                    )}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={cn(
-                          'h-3 w-3 rounded-full',
-                          getMarkerColor(device)
-                        )} />
-                        <span className="text-sm font-medium">{device.id}</span>
-                      </div>
-                      <span className={cn(
-                        'text-sm font-semibold',
-                        device.isFull ? 'text-destructive' : device.binPercentage >= 75 ? 'text-warning' : 'text-success'
-                      )}>
-                        {device.binPercentage}%
-                      </span>
+              <CardContent className="p-0">
+                <div className="max-h-[500px] overflow-y-auto p-3 grid grid-cols-2 lg:grid-cols-1 gap-2 custom-scrollbar">
+                  {devices.map((device) => {
+                    const config = getStatusConfig(device);
+                    return (
+                      <button
+                        key={device.id}
+                        onClick={() => handleDeviceSelect(device)}
+                        className={cn(
+                          'w-full rounded-xl border p-3 text-left transition-all duration-300 group relative overflow-hidden',
+                          selectedDevice?.id === device.id 
+                            ? cn('border-primary shadow-lg shadow-primary/20 bg-primary/5', config.gradient) 
+                            : 'border-border/50 hover:border-primary/40 hover:bg-primary/5'
+                        )}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/0 via-primary/5 to-primary/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                        
+                        <div className="relative z-10">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className={cn(
+                                'h-2 w-2 rounded-full animate-pulse',
+                                config.bg,
+                                config.shadow
+                              )} />
+                              <span className="text-xs font-bold truncate max-w-[80px]">{device.name || device.id}</span>
+                            </div>
+                            <span className={cn(
+                              'text-xs font-black',
+                              device.isFull ? 'text-destructive' : device.binPercentage >= 75 ? 'text-orange-500' : 'text-success'
+                            )}>
+                              {device.binPercentage}%
+                            </span>
+                          </div>
+                          
+                          <div className="flex items-center justify-between gap-1">
+                             <div className="flex items-center gap-1 opacity-80 scale-75 origin-left">
+                               <BatteryIcon percentage={device.batteryLevel} size="xs" />
+                             </div>
+                             {device.tamperDetected && (
+                               <AlertTriangle className="h-3 w-3 text-destructive animate-bounce" />
+                             )}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                  {devices.length === 0 && (
+                    <div className="col-span-2 py-8 text-center">
+                      <p className="text-xs text-muted-foreground italic">No devices synchronizing...</p>
                     </div>
-                    <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>isFull: {device.isFull ? 'true' : 'false'}</span>
-                      {device.tamperDetected && (
-                        <AlertTriangle className="h-3 w-3 text-warning" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-                {devices.length === 0 && (
-                  <p className="text-sm text-muted-foreground">No devices found in Firebase.</p>
-                )}
+                  )}
+                </div>
               </CardContent>
             </Card>
           </div>
