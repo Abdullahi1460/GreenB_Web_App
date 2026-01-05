@@ -220,12 +220,14 @@ export const Navbar = () => {
                   Settings
                 </DropdownMenuItem>
               </Link>
-              <Link to="/billing">
-                <DropdownMenuItem className="flex items-center gap-2">
-                  <span className="font-bold">$</span>
-                  Billing & Plans
-                </DropdownMenuItem>
-              </Link>
+              {userRole !== 'admin' && (
+                <Link to="/billing">
+                  <DropdownMenuItem className="flex items-center gap-2">
+                    <span className="font-bold">$</span>
+                    Billing & Plans
+                  </DropdownMenuItem>
+                </Link>
+              )}
               <DropdownMenuSeparator />
               <Link to="/">
                 <DropdownMenuItem className="flex items-center gap-2 text-destructive">
