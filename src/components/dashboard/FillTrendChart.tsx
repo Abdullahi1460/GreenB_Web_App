@@ -12,7 +12,7 @@ interface ChartPoint {
   [key: string]: number | string | undefined;
 }
 
-export const FillTrendChart = () => {
+export const FillTrendChart = ({ ownerId }: { ownerId?: string }) => {
   const [data, setData] = useState<ChartPoint[]>([]);
   const [devices, setDevices] = useState<Device[]>([]);
 
@@ -20,7 +20,7 @@ export const FillTrendChart = () => {
     // Subscribe to devices to know which lines to draw
     const unsubscribeDevices = subscribeDevices((liveDevices) => {
       setDevices(liveDevices);
-    });
+    }, ownerId);
     return () => unsubscribeDevices();
   }, []);
 
@@ -33,83 +33,85 @@ export const FillTrendChart = () => {
         const currentPoint: ChartPoint = { time: now };
         let totalFill = 0;
         let count = 0;
-        
+
         devices.forEach(d => {
           currentPoint[d.id] = d.binPercentage;
           totalFill += d.binPercentage;
           count++;
         });
-        
+
         if (count > 0) {
           currentPoint.average = Math.round(totalFill / count);
         }
-        
+
         // Show a flat line history if we have no events
         setData([
-            { ...currentPoint, time: format(addHours(new Date(), -4), 'HH:mm') },
-            { ...currentPoint, time: format(addHours(new Date(), -2), 'HH:mm') },
-            currentPoint
+          { ...currentPoint, time: format(addHours(new Date(), -4), 'HH:mm') },
+          { ...currentPoint, time: format(addHours(new Date(), -2), 'HH:mm') },
+          currentPoint
         ]);
         return;
       }
 
       // Process events into time buckets
-      const sortedEvents = [...events].sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-      
+      const sortedEvents = [...events]
+        .filter(e => devices.some(d => d.id === e.deviceId)) // Only events for user's devices
+        .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
       // We want to show the last 24 hours or so
       const buckets: Record<string, any> = {};
       const deviceLastValues: Record<string, number> = {};
 
       // Initialize with 0 or baseline
       devices.forEach(d => {
-          deviceLastValues[d.id] = 0;
+        deviceLastValues[d.id] = 0;
       });
 
       // Iterate through events and update state
       sortedEvents.forEach(e => {
-          if (e.eventType === 'fill_change' || e.eventType === 'fill_level') {
-              const val = e.newValue ?? e.binPercentage; // Handle different event shapes
-              if (typeof val === 'number') {
-                  deviceLastValues[e.deviceId] = val;
-                  
-                  const timeKey = format(parseISO(e.timestamp), 'HH:mm');
-                  // Create or update bucket
-                  if (!buckets[timeKey]) {
-                      buckets[timeKey] = { time: timeKey, ...deviceLastValues };
-                  } else {
-                      buckets[timeKey] = { ...buckets[timeKey], ...deviceLastValues };
-                  }
-              }
+        if (e.eventType === 'fill_change' || e.eventType === 'fill_level') {
+          const val = e.newValue ?? e.binPercentage; // Handle different event shapes
+          if (typeof val === 'number') {
+            deviceLastValues[e.deviceId] = val;
+
+            const timeKey = format(parseISO(e.timestamp), 'HH:mm');
+            // Create or update bucket
+            if (!buckets[timeKey]) {
+              buckets[timeKey] = { time: timeKey, ...deviceLastValues };
+            } else {
+              buckets[timeKey] = { ...buckets[timeKey], ...deviceLastValues };
+            }
           }
+        }
       });
 
       // Calculate averages
       const chartData = Object.values(buckets).map((point: any) => {
-          let sum = 0;
-          let count = 0;
-          devices.forEach(d => {
-              if (typeof point[d.id] === 'number') {
-                  sum += point[d.id];
-                  count++;
-              }
-          });
-          return {
-              ...point,
-              average: count > 0 ? Math.round(sum / count) : 0
-          };
+        let sum = 0;
+        let count = 0;
+        devices.forEach(d => {
+          if (typeof point[d.id] === 'number') {
+            sum += point[d.id];
+            count++;
+          }
+        });
+        return {
+          ...point,
+          average: count > 0 ? Math.round(sum / count) : 0
+        };
       });
 
       // If we still have very little data (e.g. < 2 points), append current state
       if (chartData.length < 2 && devices.length > 0) {
-           const now = format(new Date(), 'HH:mm');
-           const currentPoint: ChartPoint = { time: now };
-           let sum = 0;
-           devices.forEach(d => {
-               currentPoint[d.id] = d.binPercentage;
-               sum += d.binPercentage;
-           });
-           currentPoint.average = devices.length > 0 ? Math.round(sum / devices.length) : 0;
-           chartData.push(currentPoint);
+        const now = format(new Date(), 'HH:mm');
+        const currentPoint: ChartPoint = { time: now };
+        let sum = 0;
+        devices.forEach(d => {
+          currentPoint[d.id] = d.binPercentage;
+          sum += d.binPercentage;
+        });
+        currentPoint.average = devices.length > 0 ? Math.round(sum / devices.length) : 0;
+        chartData.push(currentPoint);
       }
 
       setData(chartData);
@@ -141,13 +143,13 @@ export const FillTrendChart = () => {
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-            <XAxis 
-              dataKey="time" 
+            <XAxis
+              dataKey="time"
               className="text-xs fill-muted-foreground"
               tick={{ fontSize: 12 }}
             />
-            <YAxis 
-              domain={[0, 100]} 
+            <YAxis
+              domain={[0, 100]}
               className="text-xs fill-muted-foreground"
               tick={{ fontSize: 12 }}
               tickFormatter={(value) => `${value}%`}
@@ -161,11 +163,11 @@ export const FillTrendChart = () => {
               }}
               formatter={(value: number) => [`${value}%`, '']}
             />
-            <Legend 
+            <Legend
               wrapperStyle={{ fontSize: '12px' }}
               iconType="circle"
             />
-            
+
             {/* Dynamic Lines for each device */}
             {devices.slice(0, 5).map((device, index) => (
               <Line

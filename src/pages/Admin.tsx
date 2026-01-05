@@ -79,7 +79,7 @@ export default function Admin() {
                             dataUnsubscribes.push(paymentsUnsub);
 
                             // Bins
-                            const binsUnsub = onValue(ref(db, 'bins'), (snap) => {
+                            const binsUnsub = onValue(ref(db, 'devices'), (snap) => {
                                 // @ts-ignore
                                 setStats(prev => ({ ...prev, bins: snap.size }));
                             });

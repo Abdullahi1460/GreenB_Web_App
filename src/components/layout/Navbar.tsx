@@ -29,7 +29,6 @@ const navLinks = [
   { to: '/alerts', label: 'Alerts', icon: Bell },
   { to: '/map', label: 'Map', icon: Map },
   { to: '/billing', label: 'Subscription', icon: CreditCard },
-  { to: '/settings', label: 'Settings', icon: Settings },
 ];
 
 export const Navbar = () => {
@@ -57,7 +56,14 @@ export const Navbar = () => {
               reqSnap.forEach((child) => {
                 if (child.val().status === 'pending') count++;
               });
-              setUnreadCount(count);
+
+              setUnreadCount(prev => {
+                if (count > prev) {
+                  // Simulate mobile notification trigger
+                  console.log(`[MOBILE NOTIFICATION] New emergency request! Total pending: ${count}`);
+                }
+                return count;
+              });
             });
           } else {
             setUnreadCount(0);
@@ -143,7 +149,11 @@ export const Navbar = () => {
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-4 w-4" />
-                {unreadCount > 0 && <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-600 border-2 border-background" />}
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white border-2 border-background">
+                    {unreadCount}
+                  </span>
+                )}
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-64">

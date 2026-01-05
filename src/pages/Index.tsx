@@ -115,10 +115,10 @@ const Index = () => {
           {!isAdmin && (
             <div className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-success/0 via-success/30 to-success/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 rounded-md" />
-              <Button 
-                variant="default" 
-                className="relative bg-gradient-to-r from-success to-green-600 hover:from-success/90 hover:to-green-700 text-success-foreground backdrop-blur-sm border border-success/30 hover:border-success/50 shadow-lg hover:shadow-2xl hover:shadow-success/30 hover:scale-105 hover:-translate-y-1 transition-all duration-500" 
-                onClick={handleEmergencyRequest} 
+              <Button
+                variant="default"
+                className="relative bg-gradient-to-r from-success to-green-600 hover:from-success/90 hover:to-green-700 text-success-foreground backdrop-blur-sm border border-success/30 hover:border-success/50 shadow-lg hover:shadow-2xl hover:shadow-success/30 hover:scale-105 hover:-translate-y-1 transition-all duration-500"
+                onClick={handleEmergencyRequest}
                 disabled={requesting}
               >
                 <Truck className="mr-1.5 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
@@ -159,10 +159,12 @@ const Index = () => {
         {/* Charts and Alerts */}
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <FillTrendChart />
+            <FillTrendChart ownerId={uid} />
           </div>
           <div>
-            <AlertsPanel alerts={alerts} />
+            <AlertsPanel
+              alerts={alerts.filter(a => devices.some(d => d.id === a.deviceId))}
+            />
           </div>
         </div>
 
