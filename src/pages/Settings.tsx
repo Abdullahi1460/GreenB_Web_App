@@ -27,6 +27,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import PushNotificationManager from '@/components/subscription/PushNotificationManager';
 
 type SettingsSection = 'general' | 'notification' | 'profile' | 'plan' | 'security' | 'delete-device' | 'account';
 
@@ -182,6 +183,8 @@ const Settings = () => {
                                 ))}
                             </CardContent>
                         </Card>
+
+                        <PushNotificationManager />
                     </div>
                 );
 

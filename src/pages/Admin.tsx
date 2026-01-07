@@ -118,6 +118,19 @@ export default function Admin() {
         }
     }, [navigate]);
 
+    useEffect(() => {
+        // Handle anchor scrolling
+        if (!statsLoading && window.location.hash === '#emergency-requests') {
+            const timer = setTimeout(() => {
+                const element = document.getElementById('emergency-requests');
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 100);
+            return () => clearTimeout(timer);
+        }
+    }, [statsLoading]);
+
     if (loading) return <div className="p-10">Loading...</div>;
 
     if (role !== 'admin') {
@@ -279,7 +292,7 @@ export default function Admin() {
                     </Card>
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 scroll-mt-20" id="emergency-requests">
                     <Card className="col-span-4 border-red-500/20 bg-gradient-to-br from-card to-red-500/5 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">

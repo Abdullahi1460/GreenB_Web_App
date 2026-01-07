@@ -36,6 +36,7 @@ export const Navbar = () => {
   const { resolvedTheme, setTheme } = useTheme();
   const [userRole, setUserRole] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [latestRequests, setLatestRequests] = useState<any[]>([]);
 
   useEffect(() => {
     let roleUnsubscribe: (() => void) | undefined;
@@ -53,10 +54,19 @@ export const Navbar = () => {
             if (requestsUnsubscribe) requestsUnsubscribe();
             requestsUnsubscribe = onValue(ref(db, 'requests'), (reqSnap) => {
               let count = 0;
+              const reqs: any[] = [];
+
               reqSnap.forEach((child) => {
-                if (child.val().status === 'pending') count++;
+                const val = child.val();
+                if (val.status === 'pending') {
+                  count++;
+                  reqs.push({ id: child.key, ...val });
+                }
               });
 
+              // Sort newest first and take top 5
+              reqs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+              setLatestRequests(reqs.slice(0, 5));
               setUnreadCount(prev => {
                 if (count > prev) {
                   // Simulate mobile notification trigger
@@ -160,16 +170,28 @@ export const Navbar = () => {
               <div className="space-y-4">
                 <h4 className="font-medium leading-none">Notifications</h4>
                 {unreadCount > 0 ? (
-                  <div className="text-sm">
-                    <p className="text-destructive font-medium">{unreadCount} Pending Request{unreadCount !== 1 ? 's' : ''}</p>
-                    <p className="text-muted-foreground text-xs mt-1">Emergency pickup requested.</p>
+                  <div className="space-y-3">
+                    <p className="text-destructive font-bold text-xs uppercase tracking-wider">
+                      {unreadCount} Pending Request{unreadCount !== 1 ? 's' : ''}
+                    </p>
+                    <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                      {latestRequests.map((req) => (
+                        <div key={req.id} className="text-[11px] border-l-2 border-red-500 pl-2 py-1 bg-secondary/30 rounded-r-md">
+                          <p className="font-semibold truncate text-foreground">{req.email}</p>
+                          <div className="flex justify-between items-center text-muted-foreground mt-0.5">
+                            <span className="capitalize">{req.type?.replace('_', ' ')}</span>
+                            <span>{new Date(req.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No new notifications.</p>
+                  <p className="text-sm text-center py-4 text-muted-foreground">No new notifications.</p>
                 )}
-                {userRole === 'admin' && unreadCount > 0 && (
-                  <Button variant="outline" size="sm" className="w-full" asChild>
-                    <Link to="/admin">View Requests</Link>
+                {userRole === 'admin' && (
+                  <Button variant="default" size="sm" className="w-full text-xs font-bold" asChild>
+                    <Link to="/admin#emergency-requests">View All Requests</Link>
                   </Button>
                 )}
               </div>

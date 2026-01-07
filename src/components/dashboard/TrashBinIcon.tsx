@@ -94,41 +94,74 @@ export const TrashBinIcon = ({ percentage, size = 'md', isFull = false }: TrashB
   const levelClipId = `levelClip-${safeUid}`;
 
   return (
-    <div className={cn('relative flex items-center justify-center', colorClass)} style={{ width: w, height: h }}>
-      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="drop-shadow-sm">
+    <div className={cn('relative flex items-center justify-center transition-all duration-500', colorClass)} style={{ width: w, height: h }}>
+      {/* Background glow for the entire icon */}
+      <div
+        className="absolute inset-0 rounded-full opacity-20 blur-2xl transition-all duration-1000"
+        style={{ backgroundColor: waveColor }}
+      />
+
+      <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="relative z-10 drop-shadow-2xl">
         <defs>
+          {/* Main Fill Gradient */}
+          <linearGradient id={`gradient-${safeUid}`} x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={waveColor} stopOpacity={0.8} />
+            <stop offset="50%" stopColor={waveColor} />
+            <stop offset="100%" stopColor={waveColor} stopOpacity={0.8} />
+          </linearGradient>
+
           {/* Glow filter for brighter stroke */}
           <filter id={glowId} x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx={0} dy={0} stdDeviation={2} floodColor={waveColor} floodOpacity={0.5} />
+            <feGaussianBlur stdDeviation="2.5" result="blur" />
+            <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
+
           {/* Body clip */}
           <clipPath id={binClipId}>
             <path d={bodyPath} />
           </clipPath>
+
           {/* Level clip to ensure top edge matches percentage exactly */}
           <clipPath id={levelClipId}>
             <rect x={0} y={clampedY} width={w} height={bodyBottom - clampedY} />
           </clipPath>
         </defs>
 
-        {/* Lid - brighter and tinted */}
-        <rect x={w * 0.18} y={h * 0.16} width={w * 0.64} height={h * 0.06} rx={h * 0.02} fill={waveColor} opacity={0.30} />
-        <rect x={w * 0.30} y={h * 0.10} width={w * 0.40} height={h * 0.05} rx={h * 0.02} fill={waveColor} opacity={0.30} />
+        {/* Dynamic Shadow */}
+        <path d={bodyPath} fill="black" opacity={0.1} transform="translate(2, 4)" />
 
-        {/* Body outline */}
-        <path d={bodyPath} fill="#ffffff" stroke={waveColor} strokeWidth={3.5} strokeOpacity={0.95} filter={`url(#${glowId})`} />
+        {/* Lid - Futuristic glass look */}
+        <rect x={w * 0.18} y={h * 0.16} width={w * 0.64} height={h * 0.06} rx={h * 0.02} fill={waveColor} opacity={0.2} stroke={waveColor} strokeWidth={1} />
+        <rect x={w * 0.30} y={h * 0.10} width={w * 0.40} height={h * 0.05} rx={h * 0.02} fill={waveColor} opacity={0.4} />
+
+        {/* Body Container (Glass side) */}
+        <path
+          d={bodyPath}
+          fill="rgba(255, 255, 255, 0.05)"
+          stroke={waveColor}
+          strokeWidth={2.5}
+          strokeOpacity={0.8}
+          style={{ filter: isFull ? `url(#${glowId})` : 'none' }}
+          className={cn(isFull && "animate-pulse")}
+        />
 
         <g clipPath={`url(#${binClipId})`}>
-          <rect x={0} y={clampedY} width={w} height={levelHeight} fill={waveColor} opacity={0.30} />
+          {/* Main Liquid Base */}
+          <rect x={0} y={clampedY} width={w} height={levelHeight} fill={`url(#gradient-${safeUid})`} opacity={0.4} />
+
+          {/* Animated Waves */}
           <g clipPath={`url(#${levelClipId})`} transform={`translate(0, ${clampedY})`}>
-            <path d={buildWavePath(w, levelHeight, amp)} fill={waveColor} opacity={0.20}>
+            <path d={buildWavePath(w, levelHeight, amp)} fill={waveColor} opacity={0.3}>
               <animateTransform attributeName="transform" type="translate" from={`0 ${amp}`} to={`0 -${amp}`} dur="2s" repeatCount="indefinite" />
             </path>
-            <path d={buildWavePath(w, levelHeight, amp + 1)} fill={waveColor} opacity={0.12}>
-              <animateTransform attributeName="transform" type="translate" from={`0 ${amp + 2}`} to={`0 -${amp + 2}`} dur="3s" repeatCount="indefinite" />
+            <path d={buildWavePath(w, levelHeight, amp * 1.5)} fill={waveColor} opacity={0.2}>
+              <animateTransform attributeName="transform" type="translate" from={`-${w} ${amp}`} to={`${w} -${amp}`} dur="4s" repeatCount="indefinite" />
             </path>
           </g>
-          <rect x={0} y={clampedY} width={w} height={edgeThickness} fill={waveColor} opacity={0.6} />
+
+          {/* Highlight top edge */}
+          <rect x={0} y={clampedY} width={w} height={edgeThickness} fill="#ffffff" opacity={0.5} />
+          <rect x={0} y={clampedY} width={w} height={edgeThickness + 1} fill={waveColor} opacity={0.8} style={{ filter: `url(#${glowId})` }} />
         </g>
       </svg>
     </div>

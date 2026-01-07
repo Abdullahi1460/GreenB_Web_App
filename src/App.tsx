@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
 import Admin from "./pages/Admin";
+import ForgotPassword from "./pages/ForgotPassword";
 import ProtectedRoute from "@/components/ProtectedRoute";
 
 
@@ -32,6 +33,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>

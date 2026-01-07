@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 import { getAuth } from 'firebase/auth';
+import { getMessaging } from 'firebase/messaging';
 
 // Read configuration from env
 const envConfig = {
@@ -26,7 +27,7 @@ if (usedFallback) {
   } else {
     console.warn(
       `[Firebase] Missing env vars: ${missing.join(', ')}. Using demo credentials for local development. ` +
-        `Set VITE_FIREBASE_* in your .env.local for production.`,
+      `Set VITE_FIREBASE_* in your .env.local for production.`,
     );
   }
 }
@@ -46,18 +47,19 @@ const fallbackConfig = {
 const firebaseConfig = isProd
   ? (envConfig as any)
   : {
-      apiKey: envConfig.apiKey ?? fallbackConfig.apiKey,
-      authDomain: envConfig.authDomain ?? fallbackConfig.authDomain,
-      databaseURL: envConfig.databaseURL ?? fallbackConfig.databaseURL,
-      projectId: envConfig.projectId ?? fallbackConfig.projectId,
-      storageBucket: envConfig.storageBucket ?? fallbackConfig.storageBucket,
-      messagingSenderId: envConfig.messagingSenderId ?? fallbackConfig.messagingSenderId,
-      appId: envConfig.appId ?? fallbackConfig.appId,
-      measurementId: envConfig.measurementId ?? fallbackConfig.measurementId,
-    };
+    apiKey: envConfig.apiKey ?? fallbackConfig.apiKey,
+    authDomain: envConfig.authDomain ?? fallbackConfig.authDomain,
+    databaseURL: envConfig.databaseURL ?? fallbackConfig.databaseURL,
+    projectId: envConfig.projectId ?? fallbackConfig.projectId,
+    storageBucket: envConfig.storageBucket ?? fallbackConfig.storageBucket,
+    messagingSenderId: envConfig.messagingSenderId ?? fallbackConfig.messagingSenderId,
+    appId: envConfig.appId ?? fallbackConfig.appId,
+    measurementId: envConfig.measurementId ?? fallbackConfig.measurementId,
+  };
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const db = getDatabase(app);
 const auth = getAuth(app);
+const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
 
-export { app, db, auth, firebaseConfig, usedFallback };
+export { app, db, auth, messaging, firebaseConfig, usedFallback };

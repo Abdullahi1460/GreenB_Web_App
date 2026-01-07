@@ -273,35 +273,12 @@ const Auth = () => {
 
             {!isSignUp && (
               <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    if (!formData.email) {
-                      toast({
-                        title: "Enter your email",
-                        description: "Please provide your email to reset your password.",
-                        variant: "destructive",
-                      });
-                      return;
-                    }
-                    try {
-                      await sendPasswordResetEmail(auth, formData.email);
-                      toast({
-                        title: "Password Reset Sent",
-                        description: "Check your email for reset instructions.",
-                      });
-                    } catch (err: any) {
-                      toast({
-                        title: "Error",
-                        description: err?.message ?? "Failed to send reset email",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  className="text-sm text-primary hover:underline"
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-primary hover:underline hover:opacity-90 transition-opacity"
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
             )}
 
