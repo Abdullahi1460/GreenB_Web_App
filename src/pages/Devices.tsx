@@ -152,21 +152,21 @@ const Devices = () => {
               Manage and monitor all GreenB smart assets
             </p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <div className="flex p-1 bg-muted/30 backdrop-blur-md rounded-xl border border-white/5">
-              <Button 
-                variant={viewMode === 'grid' ? 'secondary' : 'ghost'} 
-                size="sm" 
+              <Button
+                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                size="sm"
                 onClick={() => setViewMode('grid')}
                 className={cn("rounded-lg h-8 px-3 transition-all", viewMode === 'grid' && "shadow-lg")}
               >
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Grid
               </Button>
-              <Button 
-                variant={viewMode === 'list' ? 'secondary' : 'ghost'} 
-                size="sm" 
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
                 onClick={() => setViewMode('list')}
                 className={cn("rounded-lg h-8 px-3 transition-all", viewMode === 'list' && "shadow-lg")}
               >
@@ -262,126 +262,126 @@ const Devices = () => {
             />
           </div>
           <div className="flex gap-3">
-             <Select value={filterFull} onValueChange={setFilterFull}>
-               <SelectTrigger className="w-[140px] h-11 bg-white/5 border-white/5 rounded-xl">
-                 <Filter className="mr-2 h-4 w-4 opacity-50" />
-                 <SelectValue placeholder="Capacity" />
-               </SelectTrigger>
-               <SelectContent className="rounded-xl border-white/10 bg-card/90 backdrop-blur-xl">
-                 <SelectItem value="all">Total Range</SelectItem>
-                 <SelectItem value="full">Critical (Full)</SelectItem>
-                 <SelectItem value="not_full">Operational</SelectItem>
-               </SelectContent>
-             </Select>
-             
-             <Select value={sortKey} onValueChange={(val) => setSortKey(val as SortKey)}>
-               <SelectTrigger className="w-[160px] h-11 bg-white/5 border-white/5 rounded-xl">
-                 <ArrowUpDown className="mr-2 h-4 w-4 opacity-50" />
-                 <SelectValue placeholder="Sort Method" />
-               </SelectTrigger>
-               <SelectContent className="rounded-xl border-white/10 bg-card/90 backdrop-blur-xl">
-                 <SelectItem value="id">Identifier</SelectItem>
-                 <SelectItem value="binPercentage">Capacity</SelectItem>
-                 <SelectItem value="batteryLevel">Energy</SelectItem>
-                 <SelectItem value="timestamp">Last Active</SelectItem>
-               </SelectContent>
-             </Select>
+            <Select value={filterFull} onValueChange={setFilterFull}>
+              <SelectTrigger className="w-[140px] h-11 bg-white/5 border-white/5 rounded-xl">
+                <Filter className="mr-2 h-4 w-4 opacity-50" />
+                <SelectValue placeholder="Capacity" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-white/10 bg-card/90 backdrop-blur-xl">
+                <SelectItem value="all">Total Range</SelectItem>
+                <SelectItem value="full">Critical (Full)</SelectItem>
+                <SelectItem value="not_full">Operational</SelectItem>
+              </SelectContent>
+            </Select>
 
-             <Button 
-               variant="ghost" 
-               size="icon" 
-               className="h-11 w-11 rounded-xl bg-white/5 border border-white/5"
-               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-             >
-               <ArrowUpDown className={cn("h-4 w-4 transition-transform", sortOrder === 'desc' && "rotate-180")} />
-             </Button>
+            <Select value={sortKey} onValueChange={(val) => setSortKey(val as SortKey)}>
+              <SelectTrigger className="w-[160px] h-11 bg-white/5 border-white/5 rounded-xl">
+                <ArrowUpDown className="mr-2 h-4 w-4 opacity-50" />
+                <SelectValue placeholder="Sort Method" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl border-white/10 bg-card/90 backdrop-blur-xl">
+                <SelectItem value="id">Identifier</SelectItem>
+                <SelectItem value="binPercentage">Capacity</SelectItem>
+                <SelectItem value="batteryLevel">Energy</SelectItem>
+                <SelectItem value="timestamp">Last Active</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 rounded-xl bg-white/5 border border-white/5"
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            >
+              <ArrowUpDown className={cn("h-4 w-4 transition-transform", sortOrder === 'desc' && "rotate-180")} />
+            </Button>
           </div>
-          
+
           <div className="flex items-center gap-2 ml-auto">
-             {isLoading ? (
-               <Badge className="bg-muted text-muted-foreground border-transparent animate-pulse">Syncing Hub...</Badge>
-             ) : (
-               <Badge className="bg-success/20 text-success border-success/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest relative overflow-hidden group">
-                 <span className="relative z-10 flex items-center gap-1.5">
-                   <div className="h-1 w-1 rounded-full bg-success animate-ping" />
-                   {sortedDevices.length} Active Nodes
-                 </span>
-               </Badge>
-             )}
+            {isLoading ? (
+              <Badge className="bg-muted text-muted-foreground border-transparent animate-pulse">Syncing Hub...</Badge>
+            ) : (
+              <Badge className="bg-success/20 text-success border-success/30 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest relative overflow-hidden group">
+                <span className="relative z-10 flex items-center gap-1.5">
+                  <div className="h-1 w-1 rounded-full bg-success animate-ping" />
+                  {sortedDevices.length} Active Nodes
+                </span>
+              </Badge>
+            )}
           </div>
         </div>
 
         {/* Dynamic View Area */}
         {viewMode === 'grid' ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-             {sortedDevices.map((device) => {
-                const isHigh = device.binPercentage >= 75 && !device.isFull;
-                return (
-                  <Link 
-                    key={device.id} 
-                    to={`/devices/${device.id}`} 
-                    className="group relative block animate-in fade-in slide-in-from-bottom-4 duration-500"
-                  >
+            {sortedDevices.map((device) => {
+              const isHigh = device.binPercentage >= 75 && !device.isFull;
+              return (
+                <Link
+                  key={device.id}
+                  to={`/devices/${device.id}`}
+                  className="group relative block animate-in fade-in slide-in-from-bottom-4 duration-500"
+                >
+                  <div className={cn(
+                    "h-full p-6 rounded-[2rem] bg-card/20 backdrop-blur-lg border border-white/5 transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:border-white/10 hover:shadow-2xl overflow-hidden relative",
+                    device.isFull && "hover:shadow-destructive/10"
+                  )}>
                     <div className={cn(
-                      "h-full p-6 rounded-[2rem] bg-card/20 backdrop-blur-lg border border-white/5 transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 hover:border-white/10 hover:shadow-2xl overflow-hidden relative",
-                      device.isFull && "hover:shadow-destructive/10"
-                    )}>
-                      <div className={cn(
-                        "absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 opacity-10 blur-3xl rounded-full transition-colors",
-                        device.isFull ? "bg-destructive" : isHigh ? "bg-warning" : "bg-primary"
-                      )} />
-                      
-                      <div className="relative z-10 space-y-6">
-                        <div className="flex items-start justify-between">
-                          <TrashBinIcon percentage={device.binPercentage} size="md" isFull={device.isFull} />
-                          <div className="text-right">
-                             <div className={cn(
-                               "text-3xl font-black tracking-tighter leading-none mb-1",
-                               device.isFull ? "text-destructive" : isHigh ? "text-warning" : "text-foreground"
-                             )}>
-                               {device.binPercentage}<span className="text-sm font-bold opacity-70">%</span>
-                             </div>
-                             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Load Level</p>
-                          </div>
-                        </div>
+                      "absolute top-0 right-0 w-32 h-32 -mr-16 -mt-16 opacity-10 blur-3xl rounded-full transition-colors",
+                      device.isFull ? "bg-destructive" : isHigh ? "bg-warning" : "bg-primary"
+                    )} />
 
-                        <div className="space-y-1.5">
-                          <h3 className="font-display font-extrabold text-lg text-foreground truncate group-hover:text-primary transition-colors">{device.name || "Unnamed Device"}</h3>
-                          <p className="text-xs font-mono text-muted-foreground uppercase opacity-60 flex items-center gap-1">
-                            <Cpu className="h-3 w-3" /> {device.id}
-                          </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                          <StatusBadge isFull={device.isFull} size="sm" />
-                          <TamperBadge tamperDetected={device.tamperDetected} />
-                          <DeviceStatusBadge status={device.status} />
-                        </div>
-
-                        <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5">
-                            <BatteryIcon percentage={device.batteryLevel} size="xs" />
-                            <span className="text-xs font-bold">{device.batteryLevel}%</span>
+                    <div className="relative z-10 space-y-6">
+                      <div className="flex items-start justify-between">
+                        <TrashBinIcon percentage={device.binPercentage} size="md" isFull={device.isFull} />
+                        <div className="text-right">
+                          <div className={cn(
+                            "text-3xl font-black tracking-tighter leading-none mb-1",
+                            device.isFull ? "text-destructive" : isHigh ? "text-warning" : "text-foreground"
+                          )}>
+                            {device.binPercentage}<span className="text-sm font-bold opacity-70">%</span>
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                            <Clock className="h-3 w-3" />
-                            {format(new Date(device.timestamp), 'HH:mm')}
-                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Trash Level</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <h3 className="font-display font-extrabold text-lg text-foreground truncate group-hover:text-primary transition-colors">{device.name || "Unnamed Device"}</h3>
+                        <p className="text-xs font-mono text-muted-foreground uppercase opacity-60 flex items-center gap-1">
+                          <Cpu className="h-3 w-3" /> {device.id}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge isFull={device.isFull} size="sm" />
+                        <TamperBadge tamperDetected={device.tamperDetected} />
+                        <DeviceStatusBadge status={device.status} />
+                      </div>
+
+                      <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/5">
+                          <BatteryIcon percentage={device.batteryLevel} size="xs" />
+                          <span className="text-xs font-bold">{device.batteryLevel}%</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                          <Clock className="h-3 w-3" />
+                          {format(new Date(device.timestamp), 'HH:mm')}
                         </div>
                       </div>
                     </div>
-                  </Link>
-                );
-             })}
-             {sortedDevices.length === 0 && (
-               <div className="col-span-full py-20 flex flex-col items-center justify-center rounded-[3rem] border border-dashed border-white/10 bg-card/10 backdrop-blur-sm shadow-inner">
-                 <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                   <Search className="h-10 w-10 text-muted-foreground/30" />
-                 </div>
-                 <h3 className="text-lg font-bold text-foreground">Zero Sensors Detected</h3>
-                 <p className="text-sm text-muted-foreground">Modify your search parameters or check connection.</p>
-               </div>
-             )}
+                  </div>
+                </Link>
+              );
+            })}
+            {sortedDevices.length === 0 && (
+              <div className="col-span-full py-20 flex flex-col items-center justify-center rounded-[3rem] border border-dashed border-white/10 bg-card/10 backdrop-blur-sm shadow-inner">
+                <div className="h-20 w-20 rounded-full bg-white/5 flex items-center justify-center mb-4">
+                  <Search className="h-10 w-10 text-muted-foreground/30" />
+                </div>
+                <h3 className="text-lg font-bold text-foreground">Zero Sensors Detected</h3>
+                <p className="text-sm text-muted-foreground">Modify your search parameters or check connection.</p>
+              </div>
+            )}
           </div>
         ) : (
           <Card className="rounded-[2rem] bg-card/20 backdrop-blur-xl border-white/5 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-right-8 duration-700">
