@@ -11,13 +11,25 @@ import { AlertCircle, AlertTriangle, Battery, Zap, Search, Filter, Check, Bell }
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Alert } from '@/types/device';
+import { auth, db } from '@/lib/firebase';
+import { ref, onValue } from 'firebase/database';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const Alerts = () => {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterAcknowledged, setFilterAcknowledged] = useState<string>('all');
+  const [role, setRole] = useState<'admin' | 'user'>('user');
+  const [uid, setUid] = useState<string>('');
 
-  const { data: alertsData } = useQuery({ queryKey: ['alerts'], queryFn: fetchAlerts, staleTime: 30000 });
+  const queryUid = role === 'admin' ? undefined : (uid || undefined);
+
+  const { data: alertsData } = useQuery({
+    queryKey: ['alerts', queryUid],
+    queryFn: () => fetchAlerts(queryUid),
+    staleTime: 30000,
+    enabled: role === 'admin' || !!uid,
+  });
 
   const [alerts, setAlerts] = useState<Alert[]>(alertsData ?? []);
 
@@ -26,15 +38,36 @@ const Alerts = () => {
   }, [alertsData]);
 
   useEffect(() => {
-    const unsubscribe = subscribeAlerts((live) => setAlerts(live));
-    return () => unsubscribe();
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUid(user.uid);
+        onValue(ref(db, `users/${user.uid}/role`), (snap) => {
+          setRole(snap.val() === 'admin' ? 'admin' : 'user');
+        });
+      } else {
+        setUid('');
+        setRole('user');
+      }
+    });
+
+    return () => unsubscribeAuth();
   }, []);
+
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    if (role === 'admin' || uid) {
+      unsubscribe = subscribeAlerts((live) => setAlerts(live), queryUid);
+    }
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  }, [role, uid, queryUid]);
 
   const filteredAlerts = useMemo(() => {
     let list = [...alerts];
 
     if (search) {
-      list = list.filter(a => 
+      list = list.filter(a =>
         a.deviceId.toLowerCase().includes(search.toLowerCase()) ||
         a.message.toLowerCase().includes(search.toLowerCase())
       );
@@ -45,12 +78,12 @@ const Alerts = () => {
     }
 
     if (filterAcknowledged !== 'all') {
-      list = list.filter(a => 
+      list = list.filter(a =>
         filterAcknowledged === 'new' ? !a.acknowledged : a.acknowledged
       );
     }
 
-    return list.sort((a, b) => 
+    return list.sort((a, b) =>
       new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     );
   }, [alerts, search, filterType, filterAcknowledged]);

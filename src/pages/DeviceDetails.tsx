@@ -17,13 +17,23 @@ import { useQuery } from '@tanstack/react-query';
 import { fetchDeviceById, subscribeDevice } from '@/services/realtime';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { auth, db } from '@/lib/firebase';
+import { ref, onValue } from 'firebase/database';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const DeviceDetails = () => {
   const { deviceId } = useParams();
+  const [uid, setUid] = useState<string>('');
+  const [role, setRole] = useState<'admin' | 'user'>('user');
+  const [loading, setLoading] = useState(true);
+
+  const queryUid = role === 'admin' ? undefined : (uid || undefined);
+
   const { data: initialDevice } = useQuery({
-    queryKey: ['device', deviceId],
-    queryFn: () => deviceId ? fetchDeviceById(deviceId) : Promise.resolve(null),
+    queryKey: ['device', deviceId, queryUid],
+    queryFn: () => deviceId ? fetchDeviceById(deviceId, queryUid) : Promise.resolve(null),
     staleTime: 30000,
+    enabled: !!deviceId && (!loading),
   });
   const [device, setDevice] = useState<Device | null>(initialDevice ?? null);
 
@@ -38,10 +48,28 @@ const DeviceDetails = () => {
   }, [initialDevice]);
 
   useEffect(() => {
-    if (!deviceId) return;
-    const unsubscribe = subscribeDevice(deviceId, (live) => setDevice(live ?? (initialDevice ?? null)));
-    return () => unsubscribe();
-  }, [deviceId, initialDevice]);
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUid(user.uid);
+        onValue(ref(db, `users/${user.uid}/role`), (snap) => {
+          setRole(snap.val() === 'admin' ? 'admin' : 'user');
+          setLoading(false);
+        });
+      } else {
+        setUid('');
+        setRole('user');
+        setLoading(false);
+      }
+    });
+
+    if (!deviceId || loading) return;
+    const unsubscribeDevice = subscribeDevice(deviceId, (live) => setDevice(live ?? (initialDevice ?? null)), queryUid);
+
+    return () => {
+      unsubscribeAuth();
+      if (typeof unsubscribeDevice === 'function') unsubscribeDevice();
+    };
+  }, [deviceId, initialDevice, loading, queryUid]);
 
   // Initialize map
   useEffect(() => {
@@ -49,7 +77,7 @@ const DeviceDetails = () => {
     try {
       const map = new maplibregl.Map({
         container: mapContainerRef.current,
-        style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`,
+        style: `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`,
         center: [0, 0],
         zoom: 2,
       });
@@ -86,16 +114,35 @@ const DeviceDetails = () => {
   const deviceEvents = device && (device as any).events ? (device as any).events : [];
 
 
-  if (!device) {
+  if (loading) {
     return (
       <Layout>
-        <div className="flex flex-col items-center justify-center py-20">
-          <h1 className="font-display text-2xl font-bold">Device Not Found</h1>
-          <p className="text-muted-foreground mb-4">The device "{deviceId}" could not be found.</p>
+        <div className="flex h-screen items-center justify-center">
+          <div className="animate-pulse font-display text-xl font-bold tracking-tighter">Syncing Neural Link...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  const isOwner = role === 'admin' || (device && device.ownerId === uid);
+
+  if (!device || !isOwner) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-700">
+          <div className="h-24 w-24 rounded-full bg-destructive/10 flex items-center justify-center mb-6 border border-destructive/20 shadow-2xl shadow-destructive/20">
+            <Activity className="h-10 w-10 text-destructive animate-pulse" />
+          </div>
+          <h1 className="font-display text-3xl font-black tracking-tighter text-foreground mb-2">Access Denied</h1>
+          <p className="text-muted-foreground font-medium mb-8 text-center max-w-md px-6">
+            {!device
+              ? `The device "${deviceId}" could not be located in our system.`
+              : "Security protocols active. You do not have authorization to access this device's neural telemetry."}
+          </p>
           <Link to="/devices">
-            <Button variant="outline">
+            <Button variant="outline" className="rounded-2xl border-white/10 bg-white/5 hover:bg-white/10 transition-all hover:scale-105 active:scale-95 px-8">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Devices
+              Return to Grid
             </Button>
           </Link>
         </div>

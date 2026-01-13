@@ -80,8 +80,15 @@ export default function Admin() {
 
                             // Bins
                             const binsUnsub = onValue(ref(db, 'devices'), (snap) => {
-                                // @ts-ignore
-                                setStats(prev => ({ ...prev, bins: snap.size }));
+                                let total = 0;
+                                snap.forEach((userSnap) => {
+                                    const data = userSnap.val();
+                                    // Skip legacy flat devices: if they have 'id' or 'binPercentage', they aren't UID containers
+                                    if (data && typeof data === 'object' && !('id' in data) && !('binPercentage' in data)) {
+                                        total += userSnap.size;
+                                    }
+                                });
+                                setStats(prev => ({ ...prev, bins: total }));
                             });
                             dataUnsubscribes.push(binsUnsub);
 

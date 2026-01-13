@@ -35,16 +35,19 @@ const Devices = () => {
   const [realtimeDevices, setRealtimeDevices] = useState<Device[] | null>(null);
   const [openAdd, setOpenAdd] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [addForm, setAddForm] = useState({ id: '', name: '', type: '', location: '' });
+  const [addForm, setAddForm] = useState({ name: '', type: '', location: '' });
   const [role, setRole] = useState<'admin' | 'user'>('user');
   const [uid, setUid] = useState<string>('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { toast } = useToast();
 
+  const queryUid = role === 'admin' ? undefined : (uid || undefined);
+
   const { data: liveDevices, isLoading, isError, error } = useQuery({
-    queryKey: ['devices'],
-    queryFn: () => fetchDevices(),
+    queryKey: ['devices', queryUid],
+    queryFn: () => fetchDevices(queryUid),
     staleTime: 30_000,
+    enabled: role === 'admin' || !!uid,
   });
 
   useEffect(() => {
@@ -64,13 +67,13 @@ const Devices = () => {
 
     const unsubscribeDevices = subscribeDevices((devices) => {
       setRealtimeDevices(devices);
-    });
+    }, queryUid);
 
     return () => {
       unsubscribeAuth();
       if (typeof unsubscribeDevices === 'function') unsubscribeDevices();
     };
-  }, []);
+  }, [role, uid, queryUid]);
 
   const sortedDevices = useMemo(() => {
     const base = (realtimeDevices && realtimeDevices.length > 0)
@@ -80,11 +83,6 @@ const Devices = () => {
         : [];
 
     let list = [...base];
-
-    // Filter by Owner unless Admin
-    if (role !== 'admin' && uid) {
-      list = list.filter(d => d.ownerId === uid);
-    }
 
     // Search filter
     if (search) {
@@ -188,10 +186,6 @@ const Devices = () => {
                 </DialogHeader>
                 <div className="grid gap-6 py-4">
                   <div className="space-y-2">
-                    <Label htmlFor="add-id" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Device ID</Label>
-                    <Input id="add-id" value={addForm.id} onChange={(e) => setAddForm({ ...addForm, id: e.target.value })} placeholder="Ex: GNB-001" className="bg-white/5 border-white/10 rounded-xl" />
-                  </div>
-                  <div className="space-y-2">
                     <Label htmlFor="add-name" className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Friendly Name</Label>
                     <Input id="add-name" value={addForm.name} onChange={(e) => setAddForm({ ...addForm, name: e.target.value })} placeholder="Ex: Main Office Bin" className="bg-white/5 border-white/10 rounded-xl" />
                   </div>
@@ -210,7 +204,7 @@ const Devices = () => {
                   <Button variant="ghost" onClick={() => setOpenAdd(false)} className="rounded-xl">Cancel</Button>
                   <Button
                     onClick={async () => {
-                      if (!addForm.id || !addForm.name || !addForm.type || !addForm.location) {
+                      if (!addForm.name || !addForm.type || !addForm.location) {
                         toast({ title: 'Missing fields', description: 'Please fill all fields', variant: 'destructive' });
                         return;
                       }
@@ -219,8 +213,7 @@ const Devices = () => {
                         const user = auth.currentUser;
                         if (!user) throw new Error("User not authenticated");
 
-                        await createDevice({
-                          id: addForm.id,
+                        const device = await createDevice({
                           name: addForm.name,
                           type: addForm.type,
                           location: addForm.location,
@@ -229,9 +222,9 @@ const Devices = () => {
                           latitude: 0,
                           longitude: 0,
                         });
-                        toast({ title: 'Success', description: `Registered ${addForm.id}` });
+                        toast({ title: 'Success', description: `Registered ${device.id}` });
                         setOpenAdd(false);
-                        setAddForm({ id: '', name: '', type: '', location: '' });
+                        setAddForm({ name: '', type: '', location: '' });
                       } catch (err: unknown) {
                         const message = err instanceof Error ? err.message : String(err);
                         toast({ title: 'Error', description: message ?? 'Failed to register', variant: 'destructive' });

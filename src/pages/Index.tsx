@@ -91,13 +91,21 @@ const Index = () => {
     : 0;
 
   // Alerts from Firebase (remove mock alerts)
-  const { data: alertsData } = useQuery({ queryKey: ['alerts'], queryFn: fetchAlerts, staleTime: 30000 });
+  const { data: alertsData } = useQuery({
+    queryKey: ['alerts', queryUid],
+    queryFn: () => fetchAlerts(queryUid),
+    staleTime: 30000,
+    enabled: isAdmin || !!uid,
+  });
   const [alerts, setAlerts] = useState<Alert[]>(alertsData ?? []);
   useEffect(() => { setAlerts(alertsData ?? []); }, [alertsData]);
   useEffect(() => {
-    const unsubscribe = subscribeAlerts((live) => setAlerts(live));
+    let unsubscribe: (() => void) | undefined;
+    if (isAdmin || uid) {
+      unsubscribe = subscribeAlerts((live) => setAlerts(live), queryUid);
+    }
     return () => { if (typeof unsubscribe === 'function') unsubscribe(); };
-  }, []);
+  }, [isAdmin, uid, queryUid]);
 
   if (loading) {
     return <div className="flex h-screen items-center justify-center">Loading...</div>;

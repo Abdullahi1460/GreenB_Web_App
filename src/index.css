@@ -124,7 +124,12 @@
     font-family: 'Inter', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: 'Space Grotesk', sans-serif;
   }
 }
@@ -147,11 +152,9 @@
   }
 
   .gauge-gradient {
-    background: conic-gradient(
-      hsl(var(--success)) 0%,
-      hsl(var(--warning)) 50%,
-      hsl(var(--destructive)) 100%
-    );
+    background: conic-gradient(hsl(var(--success)) 0%,
+        hsl(var(--warning)) 50%,
+        hsl(var(--destructive)) 100%);
   }
 }
 
@@ -169,6 +172,7 @@
       opacity: 0;
       transform: translateY(10px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -179,39 +183,62 @@
     0% {
       background-position: -200% 0;
     }
+
     100% {
       background-position: 200% 0;
     }
   }
 
   .shimmer {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--muted)) 0%,
-      hsl(var(--background)) 50%,
-      hsl(var(--muted)) 100%
-    );
+    background: linear-gradient(90deg,
+        hsl(var(--muted)) 0%,
+        hsl(var(--background)) 50%,
+        hsl(var(--muted)) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s infinite;
   }
 
   @keyframes markerPulse {
-    0% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.8; }
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
+
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
   }
 
   @keyframes ping-slow {
-    0% { transform: scale(1); opacity: 0.8; }
-    70% { transform: scale(2.5); opacity: 0; }
-    100% { transform: scale(2.5); opacity: 0; }
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+
+    70% {
+      transform: scale(2.5);
+      opacity: 0;
+    }
+
+    100% {
+      transform: scale(2.5);
+      opacity: 0;
+    }
   }
 
   .animate-marker-pulse {
     animation: markerPulse 2s ease-in-out infinite;
+    will-change: transform, opacity;
   }
 
   .animate-ping-slow {
     animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+    will-change: transform, opacity;
   }
 }

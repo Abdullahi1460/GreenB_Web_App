@@ -25,6 +25,7 @@ export interface Device {
 export interface Alert {
   id: string;
   deviceId: string;
+  ownerId?: string;
   type: 'full' | 'tamper' | 'low_battery' | 'wake';
   binPercentage: number;
   isFull: boolean;
