@@ -185,8 +185,8 @@ const Index = () => {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {devices.slice(0, 4).map((device) => (
                 <Link
-                  key={device.id}
-                  to={`/devices/${device.id}`}
+                  key={`${device.ownerId}_${device.id}`}
+                  to={`/devices/${device.id}?owner=${device.ownerId}`}
                   className="group"
                 >
                   <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-card-hover">

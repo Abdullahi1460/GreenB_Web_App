@@ -284,7 +284,7 @@ const MapView = () => {
                             <span>Location: {selectedDevice.location || 'Unknown'}</span>
                             <span>{new Date(selectedDevice.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           </div>
-                          <Link to={`/devices/${selectedDevice.id}`} className="block">
+                          <Link to={`/devices/${selectedDevice.id}?owner=${selectedDevice.ownerId}`} className="block">
                             <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
                               <ExternalLink className="mr-2 h-4 w-4" />
                               View Deep Analytics
@@ -322,7 +322,7 @@ const MapView = () => {
                     const config = getStatusConfig(device);
                     return (
                       <button
-                        key={device.id}
+                        key={`${device.ownerId}_${device.id}`}
                         onClick={() => handleDeviceSelect(device)}
                         className={cn(
                           'w-full rounded-xl border p-3 text-left transition-all duration-300 group relative overflow-hidden',

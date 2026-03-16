@@ -311,8 +311,8 @@ const Devices = () => {
               const isHigh = device.binPercentage >= 75 && !device.isFull;
               return (
                 <Link
-                  key={device.id}
-                  to={`/devices/${device.id}`}
+                  key={`${device.ownerId}_${device.id}`}
+                  to={`/devices/${device.id}?owner=${device.ownerId}`}
                   className="group relative block animate-in fade-in slide-in-from-bottom-4 duration-500"
                 >
                   <div className={cn(
@@ -415,7 +415,7 @@ const Devices = () => {
                 </TableHeader>
                 <TableBody>
                   {sortedDevices.map((device) => (
-                    <TableRow key={device.id} className="border-white/5 bg-transparent hover:bg-card/40 group transition-colors">
+                    <TableRow key={`${device.ownerId}_${device.id}`} className="border-white/5 bg-transparent hover:bg-card/40 group transition-colors">
                       <TableCell className="px-8 py-5">
                         <div className="space-y-0.5">
                           <div className="font-bold text-base group-hover:text-primary transition-colors">{device.name || "Anonymous Bin"}</div>
@@ -455,7 +455,7 @@ const Devices = () => {
                         <DeviceStatusBadge status={device.status} />
                       </TableCell>
                       <TableCell className="pr-8 text-right">
-                        <Link to={`/devices/${device.id}`}>
+                        <Link to={`/devices/${device.id}?owner=${device.ownerId}`}>
                           <Button variant="ghost" size="icon" className="h-10 w-10 rounded-xl hover:bg-primary/20 hover:text-primary transition-all">
                             <ExternalLink className="h-5 w-5" />
                           </Button>

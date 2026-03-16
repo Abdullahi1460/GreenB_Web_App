@@ -1,4 +1,4 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,11 +23,13 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 const DeviceDetails = () => {
   const { deviceId } = useParams();
+  const [searchParams] = useSearchParams();
+  const ownerParam = searchParams.get('owner');
   const [uid, setUid] = useState<string>('');
   const [role, setRole] = useState<'admin' | 'user'>('user');
   const [loading, setLoading] = useState(true);
 
-  const queryUid = role === 'admin' ? undefined : (uid || undefined);
+  const queryUid = role === 'admin' ? (ownerParam || undefined) : (uid || undefined);
 
   const { data: initialDevice } = useQuery({
     queryKey: ['device', deviceId, queryUid],
