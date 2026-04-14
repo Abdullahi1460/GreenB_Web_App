@@ -3,8 +3,15 @@ import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 // removed mockDevices; using Firebase devices via fetchDevices/subscribeDevices
-import { MapPin, Trash2, Battery, AlertTriangle, X, ExternalLink } from 'lucide-react';
+import { MapPin, Trash2, Battery, AlertTriangle, X, ExternalLink, Layers } from 'lucide-react';
 import { BatteryIcon } from '@/components/dashboard/BatteryIcon';
 import { cn } from '@/lib/utils';
 import { Device } from '@/types/device';
@@ -12,8 +19,7 @@ import { StatusBadge, TamperBadge } from '@/components/dashboard/StatusBadge';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDevices, subscribeDevices } from '@/services/realtime';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
 import { FeatureGuard } from '@/components/FeatureGuard';
 import { auth, db } from '@/lib/firebase';
 import { ref, onValue } from 'firebase/database';
@@ -24,6 +30,7 @@ const MapView = () => {
   const [realtimeDevices, setRealtimeDevices] = useState<Device[] | null>(null);
   const [role, setRole] = useState<'admin' | 'user'>('user');
   const [uid, setUid] = useState<string>('');
+  const [mapType, setMapType] = useState<string>('roadmap');
 
   const queryUid = role === 'admin' ? undefined : (uid || undefined);
 
@@ -37,12 +44,9 @@ const MapView = () => {
   const handleDeviceSelect = (device: Device) => {
     setSelectedDevice(device);
     if (mapRef.current && typeof device.longitude === 'number' && typeof device.latitude === 'number') {
-      mapRef.current.flyTo({
-        center: [device.longitude, device.latitude],
-        zoom: 15,
-        essential: true,
-        duration: 2000
-      });
+      mapRef.current.panTo({ lat: device.latitude, lng: device.longitude });
+      mapRef.current.setZoom(21);
+      setMapType('hybrid');
     }
   };
 
@@ -77,114 +81,18 @@ const MapView = () => {
       ? liveDevices
       : [];
 
-  // MapLibre/MapTiler setup
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map());
-  const MAPTILER_KEY = (import.meta as any).env?.VITE_MAPTILER_KEY || 'tBvtabTNxhFc7RfCBn1T';
+  const mapRef = useRef<any>(null);
 
-  // Helper for device list item color
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: 'AIzaSyAButwja5jalAEzCJCPDzQexcK48Hn54G0'
+  });
+
   const getStatusConfig = (device: Device) => {
     if (device.isFull) return { color: '#EF4444', bg: 'bg-destructive', shadow: 'shadow-destructive/50', glow: 'bg-destructive', gradient: 'from-destructive/20 to-transparent' };
     if (device.binPercentage >= 75) return { color: '#F59E0B', bg: 'bg-warning', shadow: 'shadow-warning/50', glow: 'bg-warning', gradient: 'from-warning/20 to-transparent' };
     return { color: '#22C55E', bg: 'bg-success', shadow: 'shadow-success/50', glow: 'bg-success', gradient: 'from-success/20 to-transparent' };
   };
-
-  // Initialize map once
-  useEffect(() => {
-    if (mapRef.current || !mapContainerRef.current) return;
-    try {
-      const map = new maplibregl.Map({
-        container: mapContainerRef.current,
-        style: `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`,
-        center: [0, 0],
-        zoom: 2,
-      });
-      mapRef.current = map;
-    } catch (e) {
-      console.error('Map initialization failed', e);
-    }
-
-    return () => {
-      try {
-        mapRef.current?.remove();
-      } finally {
-        mapRef.current = null;
-      }
-    };
-  }, [MAPTILER_KEY]);
-
-  // Update markers when devices change
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-    try {
-      const currentMarkerIds = new Set(devices.map(d => d.id));
-
-      // Remove markers for devices that no longer exist
-      markersRef.current.forEach((marker, id) => {
-        if (!currentMarkerIds.has(id)) {
-          marker.remove();
-          markersRef.current.delete(id);
-        }
-      });
-
-      devices.forEach((device) => {
-        if (typeof device.longitude !== 'number' || typeof device.latitude !== 'number') return;
-
-        const config = getStatusConfig(device);
-        let marker = markersRef.current.get(device.id);
-
-        if (marker) {
-          // Update existing marker position and style
-          marker.setLngLat([device.longitude, device.latitude]);
-          const el = marker.getElement();
-
-          // Update colors without full recreation
-          const halo = el.querySelector('.animate-ping-slow');
-          const dot = el.querySelector('.animate-marker-pulse');
-
-          if (halo) {
-            halo.className = cn("absolute h-10 w-10 rounded-full animate-ping-slow opacity-30", config.bg);
-          }
-          if (dot) {
-            dot.className = cn(
-              "relative h-4 w-4 rounded-full border-2 border-white shadow-lg animate-marker-pulse transform transition-transform group-hover:scale-125",
-              config.bg,
-              config.shadow
-            );
-          }
-        } else {
-          // Create custom glowing marker
-          const el = document.createElement('div');
-          el.className = 'relative flex items-center justify-center cursor-pointer group';
-
-          const halo = document.createElement('div');
-          halo.className = cn("absolute h-10 w-10 rounded-full animate-ping-slow opacity-30", config.bg);
-
-          const dot = document.createElement('div');
-          dot.className = cn(
-            "relative h-4 w-4 rounded-full border-2 border-white shadow-lg animate-marker-pulse transform transition-transform group-hover:scale-125",
-            config.bg,
-            config.shadow
-          );
-
-          el.appendChild(halo);
-          el.appendChild(dot);
-          el.onclick = () => handleDeviceSelect(device);
-
-          const newMarker = new maplibregl.Marker({ element: el })
-            .setLngLat([device.longitude, device.latitude])
-            .setOffset([0, 0])
-            .addTo(map);
-
-          markersRef.current.set(device.id, newMarker);
-        }
-      });
-    } catch (e) {
-      console.error('Marker update failed', e);
-    }
-  }, [devices]);
 
   return (
     <Layout>
@@ -199,14 +107,26 @@ const MapView = () => {
             {/* Map */}
             <Card className="lg:col-span-3 border-primary/20 bg-card/60 backdrop-blur-md overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
               <CardHeader className="pb-2 border-b border-border/50">
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
                   <div className="flex items-center gap-2 font-display text-lg group">
                     <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
                       <MapPin className="h-5 w-5 text-primary group-hover:animate-bounce" />
                     </div>
                     Device Locations
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Select value={mapType} onValueChange={setMapType}>
+                      <SelectTrigger className="h-8 w-[140px] text-xs bg-background/50 backdrop-blur-sm border-border/50 font-medium">
+                        <Layers className="h-3.5 w-3.5 mr-2 text-primary" />
+                        <SelectValue placeholder="Map Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="roadmap">Roadmap</SelectItem>
+                        <SelectItem value="satellite">Satellite</SelectItem>
+                        <SelectItem value="hybrid">Hybrid</SelectItem>
+                        <SelectItem value="terrain">Terrain</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <div className="flex items-center gap-2 px-3 py-1 bg-background/50 backdrop-blur-sm rounded-full border border-border/50">
                       <div className="flex items-center gap-1.5">
                         <div className="h-2 w-2 rounded-full bg-success shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
@@ -228,10 +148,55 @@ const MapView = () => {
               </CardHeader>
               <CardContent>
                 <div className="relative aspect-[16/9] rounded-xl overflow-hidden">
-                  <div ref={mapContainerRef} className="absolute inset-0" />
-                  {/* MapLibre container only; removed old background overlays */}
-
-                  {/* MapLibre markers handled via maplibre-gl; removed demo overlay */}
+                  {isLoaded && <GoogleMap
+                    mapContainerClassName="absolute inset-0"
+                    center={{ lat: 11.973194, lng: 8.553940 }}
+                    zoom={12}
+                    onLoad={(map) => mapRef.current = map}
+                    onUnmount={() => mapRef.current = null}
+                    options={{
+                      disableDefaultUI: true,
+                      mapTypeId: mapType,
+                      styles: [
+                        { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                        { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                        { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                        { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                        { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
+                        { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
+                        { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                        { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+                        { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+                        { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+                        { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+                        { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+                        { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+                        { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+                        { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
+                      ]
+                    }}
+                  >
+                    {devices.map((device) => {
+                      if (typeof device.longitude !== 'number' || typeof device.latitude !== 'number') return null;
+                      const config = getStatusConfig(device);
+                      return (
+                        <OverlayView
+                          key={device.id}
+                          position={{ lat: device.latitude, lng: device.longitude }}
+                          mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                        >
+                          <div className="-translate-x-1/2 -translate-y-1/2 cursor-pointer group" onClick={() => handleDeviceSelect(device)}>
+                            <div className={cn("absolute inset-0 h-10 w-10 -m-3 rounded-full animate-ping-slow opacity-30", config.bg)} />
+                            <div className={cn(
+                              "relative h-4 w-4 rounded-full border-2 border-white shadow-lg animate-marker-pulse transform transition-transform group-hover:scale-125",
+                              config.bg, config.shadow
+                            )} />
+                          </div>
+                        </OverlayView>
+                      );
+                    })}
+                  </GoogleMap>}
 
                   {/* Selected device popup */}
                   {selectedDevice && (
@@ -301,7 +266,7 @@ const MapView = () => {
                   </div>
                 </div>
                 <p className="mt-2 text-xs text-muted-foreground text-center">
-                  Powered by MapTiler / MapLibre
+                  Powered by Google Maps
                 </p>
               </CardContent>
             </Card>

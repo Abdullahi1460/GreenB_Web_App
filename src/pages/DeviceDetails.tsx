@@ -15,8 +15,7 @@ import type { Device } from '@/types/device';
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchDeviceById, subscribeDevice } from '@/services/realtime';
-import maplibregl from 'maplibre-gl';
-import 'maplibre-gl/dist/maplibre-gl.css';
+import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
 import { auth, db } from '@/lib/firebase';
 import { ref, onValue } from 'firebase/database';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -39,11 +38,10 @@ const DeviceDetails = () => {
   });
   const [device, setDevice] = useState<Device | null>(initialDevice ?? null);
 
-  // MapLibre refs
-  const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<maplibregl.Map | null>(null);
-  const markerRef = useRef<maplibregl.Marker | null>(null);
-  const MAPTILER_KEY = (import.meta as any).env?.VITE_MAPTILER_KEY || 'tBvtabTNxhFc7RfCBn1T';
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: 'AIzaSyAButwja5jalAEzCJCPDzQexcK48Hn54G0'
+  });
 
   useEffect(() => {
     setDevice(initialDevice ?? null);
@@ -73,45 +71,7 @@ const DeviceDetails = () => {
     };
   }, [deviceId, initialDevice, loading, queryUid]);
 
-  // Initialize map
-  useEffect(() => {
-    if (mapRef.current || !mapContainerRef.current) return;
-    try {
-      const map = new maplibregl.Map({
-        container: mapContainerRef.current,
-        style: `https://api.maptiler.com/maps/dataviz-dark/style.json?key=${MAPTILER_KEY}`,
-        center: [0, 0],
-        zoom: 2,
-      });
-      mapRef.current = map;
-    } catch (e) {
-      console.error('DeviceDetails map init failed', e);
-    }
-    return () => {
-      try {
-        mapRef.current?.remove();
-      } finally {
-        mapRef.current = null;
-      }
-    };
-  }, [MAPTILER_KEY]);
-
-  // Update marker
-  useEffect(() => {
-    if (!device || !mapRef.current) return;
-    try {
-      if (markerRef.current) {
-        markerRef.current.remove();
-      }
-      const color = device.isFull ? '#EF4444' : device.binPercentage >= 75 ? '#F59E0B' : '#22C55E';
-      markerRef.current = new maplibregl.Marker({ color })
-        .setLngLat([device.longitude, device.latitude])
-        .addTo(mapRef.current);
-      mapRef.current.flyTo({ center: [device.longitude, device.latitude], zoom: 14, essential: true });
-    } catch (e) {
-      console.error('DeviceDetails marker update failed', e);
-    }
-  }, [device]);
+  // Google Maps setup handled by React component
 
   const deviceEvents = device && (device as any).events ? (device as any).events : [];
 
@@ -315,7 +275,45 @@ const DeviceDetails = () => {
               </div>
             </div>
             <div className="relative aspect-video sm:aspect-square lg:aspect-video m-4 rounded-[2rem] overflow-hidden grayscale-[0.5] contrast-[1.1] hover:grayscale-0 transition-all duration-1000">
-              <div ref={mapContainerRef} className="absolute inset-0" />
+              {isLoaded && <GoogleMap
+                 mapContainerClassName="absolute inset-0"
+                 center={{ lat: device.latitude, lng: device.longitude }}
+                 zoom={21}
+                 options={{
+                   disableDefaultUI: true,
+                   mapTypeId: 'hybrid',
+                   styles: [
+                     { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+                     { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+                     { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+                     { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                     { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+                     { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
+                     { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
+                     { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+                     { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+                     { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+                     { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+                     { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+                     { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+                     { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+                     { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+                     { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
+                   ]
+                 }}
+              >
+                <OverlayView
+                  position={{ lat: device.latitude, lng: device.longitude }}
+                  mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                >
+                  <div className="-translate-x-1/2 -translate-y-full">
+                    <div className={cn("px-4 py-2 rounded-2xl text-white font-bold text-xs shadow-2xl whitespace-nowrap border border-white/20", getMarkerColor())}>
+                      Device Location
+                      <div className={cn("absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 border-r border-b border-white/20", getMarkerColor())} />
+                    </div>
+                  </div>
+                </OverlayView>
+              </GoogleMap>}
               <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/10 rounded-[2rem]" />
 
               <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none">
