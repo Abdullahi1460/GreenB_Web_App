@@ -31,6 +31,7 @@ const MapView = () => {
   const [role, setRole] = useState<'admin' | 'user'>('user');
   const [uid, setUid] = useState<string>('');
   const [mapType, setMapType] = useState<string>('roadmap');
+  const [hasFitBounds, setHasFitBounds] = useState(false);
 
   const queryUid = role === 'admin' ? undefined : (uid || undefined);
 
@@ -87,6 +88,30 @@ const MapView = () => {
     id: 'google-map-script',
     googleMapsApiKey: 'AIzaSyAButwja5jalAEzCJCPDzQexcK48Hn54G0'
   });
+
+  useEffect(() => {
+    if (isLoaded && mapRef.current && devices && devices.length > 0 && !hasFitBounds) {
+      if (window.google) {
+        const bounds = new window.google.maps.LatLngBounds();
+        let validCoords = false;
+        devices.forEach((device) => {
+          if (typeof device.latitude === 'number' && typeof device.longitude === 'number') {
+            bounds.extend({ lat: device.latitude, lng: device.longitude });
+            validCoords = true;
+          }
+        });
+        if (validCoords) {
+          mapRef.current.fitBounds(bounds);
+          window.google.maps.event.addListenerOnce(mapRef.current, 'bounds_changed', () => {
+            if (mapRef.current.getZoom() > 17) {
+              mapRef.current.setZoom(17);
+            }
+          });
+          setHasFitBounds(true);
+        }
+      }
+    }
+  }, [devices, isLoaded, hasFitBounds]);
 
   const getStatusConfig = (device: Device) => {
     if (device.isFull) return { color: '#EF4444', bg: 'bg-destructive', shadow: 'shadow-destructive/50', glow: 'bg-destructive', gradient: 'from-destructive/20 to-transparent' };
@@ -152,8 +177,8 @@ const MapView = () => {
                     mapContainerClassName="absolute inset-0"
                     center={{ lat: 11.973194, lng: 8.553940 }}
                     zoom={12}
-                    onLoad={(map) => mapRef.current = map}
-                    onUnmount={() => mapRef.current = null}
+                    onLoad={(map) => { mapRef.current = map; }}
+                    onUnmount={() => { mapRef.current = null; }}
                     options={{
                       disableDefaultUI: true,
                       mapTypeId: mapType,
