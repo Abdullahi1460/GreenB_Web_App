@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { TrashBinIcon } from '@/components/dashboard/TrashBinIcon';
 import { StatusBadge, DeviceStatusBadge, TamperBadge } from '@/components/dashboard/StatusBadge';
 
@@ -19,6 +20,25 @@ import { GoogleMap, useJsApiLoader, OverlayView } from '@react-google-maps/api';
 import { auth, db } from '@/lib/firebase';
 import { ref, onValue } from 'firebase/database';
 import { onAuthStateChanged } from 'firebase/auth';
+
+const mapStyles = [
+  { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
+  { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
+  { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
+  { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
+  { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
+  { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
+];
 
 const DeviceDetails = () => {
   const { deviceId } = useParams();
@@ -274,58 +294,82 @@ const DeviceDetails = () => {
                 <h3 className="font-bold">Deployment Zone</h3>
               </div>
             </div>
-            <div className="relative aspect-video sm:aspect-square lg:aspect-video m-4 rounded-[2rem] overflow-hidden grayscale-[0.5] contrast-[1.1] hover:grayscale-0 transition-all duration-1000">
-              {isLoaded && <GoogleMap
-                 mapContainerClassName="absolute inset-0"
-                 center={{ lat: device.latitude, lng: device.longitude }}
-                 zoom={21}
-                 options={{
-                   disableDefaultUI: true,
-                   mapTypeId: 'hybrid',
-                   styles: [
-                     { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
-                     { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
-                     { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
-                     { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
-                     { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }] },
-                     { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }] },
-                     { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }] },
-                     { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }] },
-                     { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }] },
-                     { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }] },
-                     { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }] },
-                     { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }] },
-                     { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }] },
-                     { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }] },
-                     { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }] },
-                     { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }] }
-                   ]
-                 }}
-              >
-                <OverlayView
-                  position={{ lat: device.latitude, lng: device.longitude }}
-                  mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
-                >
-                  <div className="-translate-x-1/2 -translate-y-full">
-                    <div className={cn("px-4 py-2 rounded-2xl text-white font-bold text-xs shadow-2xl whitespace-nowrap border border-white/20", getMarkerColor())}>
-                      Device Location
-                      <div className={cn("absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 border-r border-b border-white/20", getMarkerColor())} />
+            <Dialog>
+              <DialogTrigger asChild>
+                <div className="relative aspect-video sm:aspect-square lg:aspect-video m-4 rounded-[2rem] overflow-hidden grayscale-[0.5] contrast-[1.1] hover:grayscale-0 transition-all duration-1000 cursor-pointer group/map cursor-zoom-in">
+                  <div className="absolute inset-0 z-20 hover:bg-black/10 transition-colors flex items-center justify-center pointer-events-auto" title="Click to unfold map">
+                    <div className="opacity-0 group-hover/map:opacity-100 transition-opacity bg-background/80 backdrop-blur-md text-foreground font-bold px-4 py-2 rounded-xl text-sm border border-white/10 shadow-2xl flex items-center gap-2">
+                       <MapPin className="h-4 w-4" />
+                       Expand Map
                     </div>
                   </div>
-                </OverlayView>
-              </GoogleMap>}
-              <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/10 rounded-[2rem]" />
+                  {isLoaded && <GoogleMap
+                     mapContainerClassName="absolute inset-0 pointer-events-none"
+                     center={{ lat: device.latitude, lng: device.longitude }}
+                     zoom={21}
+                     options={{
+                       disableDefaultUI: true,
+                       gestureHandling: "none",
+                       mapTypeId: 'hybrid',
+                       styles: mapStyles
+                     }}
+                  >
+                    <OverlayView
+                      position={{ lat: device.latitude, lng: device.longitude }}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div className="-translate-x-1/2 -translate-y-full">
+                        <div className={cn("px-4 py-2 rounded-2xl text-white font-bold text-xs shadow-2xl whitespace-nowrap border border-white/20", getMarkerColor())}>
+                          Device Location
+                          <div className={cn("absolute -bottom-2 left-1/2 -translate-x-1/2 w-4 h-4 rotate-45 border-r border-b border-white/20", getMarkerColor())} />
+                        </div>
+                      </div>
+                    </OverlayView>
+                  </GoogleMap>}
+                  <div className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-white/10 rounded-[2rem]" />
 
-              <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none">
-                <div className="rounded-2xl bg-background/80 backdrop-blur-md px-4 py-3 border border-white/10 shadow-2xl">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Geo-Coordinates</p>
-                  <p className="text-xs font-mono font-bold">{device.latitude.toFixed(6)}, {device.longitude.toFixed(6)}</p>
+                  <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between pointer-events-none z-30">
+                    <div className="rounded-2xl bg-background/80 backdrop-blur-md px-4 py-3 border border-white/10 shadow-2xl">
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-0.5">Geo-Coordinates</p>
+                      <p className="text-xs font-mono font-bold">{device.latitude.toFixed(6)}, {device.longitude.toFixed(6)}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase">Live</Badge>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Badge className="bg-primary/20 text-primary border-primary/30 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase">Live</Badge>
+              </DialogTrigger>
+              <DialogContent className="max-w-[95vw] w-[95vw] h-[90vh] sm:h-[85vh] sm:max-w-5xl p-0 overflow-hidden rounded-[2rem] border-white/10 bg-card/50 backdrop-blur-3xl shadow-2xl">
+                <DialogTitle className="sr-only">Device Details Map</DialogTitle>
+                <DialogDescription className="sr-only">Detailed interactive map showing device deployment zone.</DialogDescription>
+                <div className="absolute top-4 left-4 z-50 rounded-2xl bg-background/80 backdrop-blur-md px-4 py-3 border border-white/10 shadow-2xl pointer-events-none">
+                  <h3 className="font-bold text-sm tracking-tight">{device.id}</h3>
+                  <p className="text-xs font-mono font-bold text-muted-foreground mt-0.5">{device.latitude.toFixed(6)}, {device.longitude.toFixed(6)}</p>
                 </div>
-              </div>
-            </div>
+                {isLoaded && <GoogleMap
+                     mapContainerClassName="w-full h-full"
+                     center={{ lat: device.latitude, lng: device.longitude }}
+                     zoom={18}
+                     options={{
+                       disableDefaultUI: false,
+                       mapTypeId: 'hybrid',
+                       styles: mapStyles
+                     }}
+                  >
+                    <OverlayView
+                      position={{ lat: device.latitude, lng: device.longitude }}
+                      mapPaneName={OverlayView.OVERLAY_MOUSE_TARGET}
+                    >
+                      <div className="-translate-x-1/2 -translate-y-full">
+                        <div className={cn("px-5 py-3 rounded-2xl text-white font-bold text-sm shadow-2xl whitespace-nowrap border-2 border-white/20 animate-bounce", getMarkerColor())}>
+                          Deployment Zone
+                          <div className={cn("absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-5 h-5 rotate-45 border-r-2 border-b-2 border-white/20", getMarkerColor())} />
+                        </div>
+                      </div>
+                    </OverlayView>
+                  </GoogleMap>}
+              </DialogContent>
+            </Dialog>
           </Card>
 
           {/* Precision Event Logs */}
